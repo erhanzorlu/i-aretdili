@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <title>TİD Defteri - İşaret Dili Sözlüğü</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div class="mobile-container">
+      
+      <!-- Üst Başlık -->
+      <header class="app-header">
+        <div class="header-top">
+          <div class="brand">
+            <div>
+              <span class="brand-badge">ÖĞRENME GÜNLÜĞÜ</span>
+              <h1 class="brand-title">İşaret Dili Defterim</h1>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="btn-auth" class="btn-auth-pill" title="Hesap / Giriş Yap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span id="auth-status-text">Giriş Yap</span>
+            </button>
+            <button id="btn-export-data" class="header-action-btn" title="Yedek Al / Kodu Kopyala">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- İstatistik Şeridi -->
+        <div class="quick-stats-strip">
+          <div class="stat-pill">
+            <span class="stat-num" id="total-words-count">0</span>
+            <span class="stat-label">Kelime</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-num" id="total-sentences-count">0</span>
+            <span class="stat-label">Cümle</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-num" id="hard-words-count">0</span>
+            <span class="stat-label">Zorlandıklarım</span>
+          </div>
+        </div>
+
+        <!-- Sekmeler -->
+        <nav class="nav-tabs" role="tablist">
+          <button class="tab-btn active" data-tab="words" role="tab" id="tab-words-btn">
+            Kelimeler
+          </button>
+          <button class="tab-btn" data-tab="sentences" role="tab" id="tab-sentences-btn">
+            Cümleler
+          </button>
+          <button class="tab-btn" data-tab="practice" role="tab" id="tab-practice-btn">
+            Pratik & Test
+          </button>
+        </nav>
+      </header>
+
+      <!-- Ana İçerik -->
+      <main class="app-main">
+        
+        <!-- ==================== SEKME 1: KELİMELER ==================== -->
+        <section id="section-words" class="tab-content active">
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-input" placeholder="Kelime veya not ara..." autocomplete="off">
+            <button id="clear-search" class="clear-btn hidden">&times;</button>
+          </div>
+
+          <div class="quick-filter-row">
+            <button class="pill-toggle active" data-sort="default">Tümü</button>
+            <button class="pill-toggle" data-sort="most-clicked">
+              En Çok Baktıklarım (<span id="unuttuklarim-badge">0</span>)
+            </button>
+            <button class="pill-toggle" data-sort="hard-only">
+              Zorlandıklarım
+            </button>
+          </div>
+
+          <div class="category-scroll-container">
+            <div class="scroll-label category-header-row">
+              <span class="category-header-title">Kategoriler</span>
+              <div class="category-header-actions">
+                <button id="btn-quick-add-cat" type="button" class="cat-header-btn" title="Yeni Kategori Ekle">+ Ekle</button>
+                <button id="btn-manage-cats" type="button" class="cat-header-btn" title="Kategorileri Düzenle veya Sil">⚙️ Yönet</button>
+              </div>
+            </div>
+            <div class="category-chips" id="category-chips-list">
+              <!-- Dinamik doldurulur -->
+            </div>
+          </div>
+
+          <div class="week-filter-bar">
+            <div class="week-label">Haftalar</div>
+            <div class="week-chips" id="week-chips-list">
+              <!-- Dinamik doldurulur -->
+            </div>
+          </div>
+
+          <div class="cards-list" id="words-cards-container">
+            <!-- Kelimeler buraya eklenecek -->
+          </div>
+        </section>
+
+        <!-- ==================== SEKME 2: CÜMLELER ==================== -->
+        <section id="section-sentences" class="tab-content">
+          <div class="section-intro-card">
+            <div class="intro-title">TİD Cümle Dizilimi</div>
+            <p class="intro-desc">İşaret dilinde Türkçe ekler yerine kök kelimeler peş peşe gelir. Kaydettiğin cümlelerde işaret sıralamasını görebilirsin.</p>
+            <button id="btn-goto-sentence-gen" type="button" class="btn-action primary-gen" style="margin-top: 8px; font-size: 11.5px; padding: 5px 12px; display: inline-flex;">
+              ⚡ Rastgele Cümle & Akış Pratiği Yap
+            </button>
+          </div>
+
+          <div class="search-box">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-sentence-input" placeholder="Cümle ara...">
+          </div>
+
+          <div class="cards-list" id="sentences-cards-container">
+            <!-- Cümleler buraya eklenecek -->
+          </div>
+        </section>
+
+        <!-- ==================== SEKME 3: PRATİK & TEST ==================== -->
+        <section id="section-practice" class="tab-content">
+          
+          <!-- Pratik Modu Seçici (Tek Kelime vs Akıcı Cümle) -->
+          <div class="practice-mode-nav">
+            <button type="button" class="practice-mode-btn active" id="btn-mode-word" data-mode="word">
+              🎴 Tek Kelime Kartı
+            </button>
+            <button type="button" class="practice-mode-btn" id="btn-mode-sentence" data-mode="sentence-generator">
+              🔗 Akıcı Cümle / Akış Üreteci
+            </button>
+          </div>
+
+          <!-- MOD 1: TEK KELİME HAFIZA KARTI -->
+          <div class="practice-card-box" id="practice-word-container">
+            <div class="practice-header">
+              <span class="practice-badge">Hafıza Kartı</span>
+              <h3>Rastgele Kelime Sor</h3>
+              <p>Kelimeyi gör, işaretini hatırla, videoyla kontrol et.</p>
+
+              <div class="practice-filter-row">
+                <div class="practice-filter-field">
+                  <label for="practice-category-select">Kategori:</label>
+                  <select id="practice-category-select">
+                    <option value="all">🎲 Tümü (Karışık)</option>
+                  </select>
+                </div>
+                <div class="practice-filter-field">
+                  <label for="practice-week-select">Hafta:</label>
+                  <select id="practice-week-select">
+                    <option value="all">Tüm Haftalar</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="flashcard" id="flashcard-element">
+              <div class="flashcard-top-meta">
+                <span class="flashcard-category" id="fc-category">-</span>
+                <span class="practice-pool-badge" id="fc-pool-count">Havuz: -</span>
+              </div>
+              <h2 class="flashcard-word" id="fc-word">-</h2>
+              <p class="flashcard-hint" id="fc-hint">Henüz kelime eklenmedi.</p>
+            </div>
+
+            <div class="flashcard-actions">
+              <button class="btn-action check" id="btn-fc-check">
+                ✓ Hatırladım
+              </button>
+              <button class="btn-action watch" id="btn-fc-watch">
+                ▶ Videoyu İzle
+              </button>
+              <button class="btn-action next" id="btn-fc-next">
+                Sonraki Kelime
+              </button>
+            </div>
+          </div>
+
+          <!-- MOD 2: AKICI CÜMLE / AKIŞ ÜRETECİ -->
+          <div class="practice-card-box" id="practice-sentence-generator-container" style="display: none;">
+            <div class="practice-header">
+              <span class="practice-badge">Akış & Hız Pratiği</span>
+              <h3>Rastgele Cümle & Dizi Üreteci</h3>
+              <p>Amaç anlamlı olması değil; elleri indirmeden peş peşe akıcı şekilde işaretleyebilmek.</p>
+
+              <div class="generator-controls-box">
+                <div class="generator-length-row">
+                  <span class="gen-label">Cümle Uzunluğu:</span>
+                  <div class="length-pills" id="gen-length-pills">
+                    <button type="button" class="length-pill" data-len="2">2</button>
+                    <button type="button" class="length-pill active" data-len="3">3</button>
+                    <button type="button" class="length-pill" data-len="4">4</button>
+                    <button type="button" class="length-pill" data-len="5">5</button>
+                    <button type="button" class="length-pill" data-len="6">6</button>
+                  </div>
+                  <span class="gen-label" style="font-size: 11px; color: var(--text-muted);">kelime</span>
+                </div>
+
+                <div class="practice-filter-row">
+                  <div class="practice-filter-field">
+                    <label for="gen-category-select">Kategori:</label>
+                    <select id="gen-category-select">
+                      <option value="all">🎲 Tümü (Karışık)</option>
+                    </select>
+                  </div>
+                  <div class="practice-filter-field">
+                    <label for="gen-week-select">Hafta:</label>
+                    <select id="gen-week-select">
+                      <option value="all">Tüm Haftalar</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="generated-sentence-card" id="generated-sentence-card">
+              <div class="gen-meta-top">
+                <span class="gen-status-text">İşaretleme Akışı</span>
+                <span class="practice-pool-badge" id="gen-pool-count">Havuz: -</span>
+              </div>
+
+              <div class="generated-words-sequence" id="generated-words-sequence">
+                <!-- Rastgele seçilen kelime dizisi buraya gelir -->
+              </div>
+
+              <div class="generated-sentence-quote" id="generated-sentence-quote">
+                "..."
+              </div>
+
+              <div class="gen-tip-text">
+                💡 İpucu: İşaretini unuttuğunuz kelimenin üzerine dokunarak videosunu/GIF'ini açabilirsiniz.
+              </div>
+            </div>
+
+            <div class="flashcard-actions">
+              <button class="btn-action primary-gen" id="btn-gen-new-sentence">
+                ⚡ Yeni Cümle Üret
+              </button>
+              <button class="btn-action check" id="btn-gen-done">
+                ✓ Akıcı İşaretledim
+              </button>
+            </div>
+          </div>
+
+          <div class="top-forgotten-section">
+            <h4 class="subhead">En Çok Baktığın Kelimeler</h4>
+            <div class="top-forgotten-list" id="top-forgotten-list">
+              <!-- Dolacak -->
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- Yüzen Ekle Butonu (+) -->
+      <button id="btn-fab-add" class="floating-add-btn" title="Yeni Kayıt Ekle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+
+      <!-- ==================== VİDEO MODALI (BOTTOM SHEET) ==================== -->
+      <div id="video-bottom-sheet" class="bottom-sheet-overlay">
+        <div class="bottom-sheet-content">
+          <div class="bottom-sheet-handle"></div>
+          <div class="bottom-sheet-header">
+            <div>
+              <span class="sheet-badge" id="video-sheet-badge">Kategori</span>
+              <h3 class="sheet-title" id="video-sheet-title">Kelime Adı</h3>
+            </div>
+            <button class="close-sheet-btn" id="close-video-sheet">&times;</button>
+          </div>
+
+          <div class="video-container" id="video-frame-wrapper">
+            <iframe id="video-iframe" src="" title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <img id="media-image" src="" alt="İşaret Dili Görseli/GIF" referrerpolicy="no-referrer">
+          </div>
+
+          <div class="video-meta-box">
+            <div class="video-notes-title">Not / İpucu:</div>
+            <p class="video-notes-text" id="video-sheet-notes">Not eklenmemiş.</p>
+          </div>
+
+          <div class="video-footer-actions">
+            <a id="btn-open-youtube-direct" href="#" target="_blank" rel="noopener noreferrer" class="btn-yt-external">
+              YouTube'da Aç
+            </a>
+            <button class="btn-mark-memorized" id="btn-sheet-toggle-mastered">
+              Öğrendim Olarak İşaretle
+            </button>
+            <button class="btn-sheet-edit" id="btn-sheet-edit-item" title="Bu kaydı düzenle">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Düzenle
+            </button>
+            <button class="btn-sheet-delete" id="btn-sheet-delete-item" title="Bu kaydı sil">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Sil
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== EKLEME / DÜZENLEME MODALI ==================== -->
+      <div id="add-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title" id="add-modal-title">Yeni Kayıt Ekle</h3>
+            <button class="close-modal-btn" id="close-add-modal">&times;</button>
+          </div>
+
+          <div class="modal-tabs" id="add-modal-tabs">
+            <button type="button" class="modal-tab-btn active" id="modal-tab-word">Kelime Ekle</button>
+            <button type="button" class="modal-tab-btn" id="modal-tab-sentence">Cümle Ekle</button>
+            <button type="button" class="modal-tab-btn" id="modal-tab-category">Kategori Ekle</button>
+          </div>
+
+          <!-- Kelime Formu -->
+          <form id="form-add-word" class="modal-form">
+            <div class="form-group">
+              <label for="word-input">Kelime Adı *</label>
+              <input type="text" id="word-input" required placeholder="Örn: Pazartesi">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="word-category">Kategori *</label>
+                <select id="word-category" required></select>
+              </div>
+              <div class="form-group">
+                <label for="word-week">Hafta (Sayı) *</label>
+                <input type="number" id="word-week" min="1" max="52" value="1" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="word-yt">YouTube Linki (Opsiyonel)</label>
+              <input type="url" id="word-yt" placeholder="https://www.youtube.com/watch?v=...">
+              <small class="form-hint">Normal video linki veya shorts linki yapıştırabilirsiniz.</small>
+            </div>
+
+            <div class="form-group">
+              <label for="word-notes">Not / İpucu</label>
+              <textarea id="word-notes" rows="2" placeholder="El şekli, mimikler veya dikkat edilecek püf noktası..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-word">Vazgeç</button>
+              <button type="submit" class="btn-submit" id="btn-submit-word">Kaydet</button>
+            </div>
+          </form>
+
+          <!-- Cümle Formu -->
+          <form id="form-add-sentence" class="modal-form hidden">
+            <div class="form-group">
+              <label for="sentence-turkish">Türkçe Cümle *</label>
+              <input type="text" id="sentence-turkish" required placeholder="Örn: Doğum günüm 23 Nisan.">
+            </div>
+
+            <div class="form-group">
+              <label for="sentence-tid">TİD İşaret Sırası (Virgülle ayırın) *</label>
+              <input type="text" id="sentence-tid" required placeholder="Örn: DOĞUM, GÜN, 23, NİSAN">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="sentence-category">Kategori *</label>
+                <select id="sentence-category" required></select>
+              </div>
+              <div class="form-group">
+                <label for="sentence-week">Hafta (Sayı) *</label>
+                <input type="number" id="sentence-week" min="1" max="52" value="1" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="sentence-yt">YouTube Linki</label>
+              <input type="url" id="sentence-yt" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+
+            <div class="form-group">
+              <label for="sentence-notes">Notlar</label>
+              <textarea id="sentence-notes" rows="2" placeholder="Cümleyle ilgili not..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-sentence">Vazgeç</button>
+              <button type="submit" class="btn-submit" id="btn-submit-sentence">Kaydet</button>
+            </div>
+          </form>
+
+          <!-- Kategori Formu -->
+          <form id="form-add-category" class="modal-form hidden">
+            <div class="form-group">
+              <label for="category-name-input">Yeni Kategori Adı *</label>
+              <input type="text" id="category-name-input" required placeholder="Örn: Renkler, Hayvanlar, Sağlık...">
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-category">Vazgeç</button>
+              <button type="submit" class="btn-submit" id="btn-submit-category">Kaydet</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ==================== KATEGORİ YÖNETİMİ MODALI ==================== -->
+      <div id="categories-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">Kategori Yönetimi</h3>
+            <button class="close-modal-btn" id="close-categories-modal">&times;</button>
+          </div>
+
+          <p class="manage-cat-subtext">
+            Kategorileri yeniden adlandırabilir, silebilir veya yeni kategori ekleyebilirsiniz. Kategori silindiğinde kelimeler silinmez, "Genel" kategorisine aktarılır.
+          </p>
+
+          <form id="form-manage-add-category" class="manage-add-cat-form">
+            <input type="text" id="manage-new-cat-input" required placeholder="Yeni kategori adı yazın..." maxlength="40" class="manage-cat-input">
+            <button type="submit" class="btn-submit" style="padding: 8px 14px; white-space: nowrap;">+ Ekle</button>
+          </form>
+
+          <div class="manage-cat-list-header">
+            Mevcut Kategoriler
+          </div>
+          
+          <div class="manage-categories-list" id="manage-categories-list">
+            <!-- Dinamik doldurulur -->
+          </div>
+
+          <div class="modal-actions" style="margin-top: 14px;">
+            <button type="button" class="btn-secondary" id="btn-close-categories-modal">Tamam</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== YEDEK / KOD MODALI ==================== -->
+      <div id="export-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">Veri Yedeği</h3>
+            <button class="close-modal-btn" id="close-export-modal">&times;</button>
+          </div>
+          <p class="export-desc">Eklediğin kelimelerin kod çıktısı aşağıdadır. İstersen doğrudan <code>data.js</code> dosyana da yapıştırabilirsin.</p>
+          
+          <div class="code-box-wrapper">
+            <textarea id="export-code-area" readonly rows="10"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="btn-copy-code">Kodu Kopyala</button>
+            <button type="button" class="btn-submit" id="btn-download-json">JSON İndir</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== SİLME ONAY MODALI ==================== -->
+      <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-card modal-confirm-card">
+          <div class="modal-header">
+            <h3 class="modal-title" id="confirm-modal-title">Kaydı Sil</h3>
+            <button class="close-modal-btn" id="close-confirm-modal">&times;</button>
+          </div>
+          <p class="confirm-message" id="confirm-modal-message">Bu kaydı silmek istediğinize emin misiniz?</p>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" id="btn-confirm-cancel">Vazgeç</button>
+            <button type="button" class="btn-danger" id="btn-confirm-ok">Evet, Sil</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== GİRİŞ / KAYIT MODALI ==================== -->
+      <div id="auth-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title" id="auth-modal-title">Giriş Yap</h3>
+            <button class="close-modal-btn" id="close-auth-modal">&times;</button>
+          </div>
+
+          <div class="auth-tabs">
+            <button type="button" class="auth-tab-btn active" id="tab-login-btn">Giriş Yap</button>
+            <button type="button" class="auth-tab-btn" id="tab-register-btn">Ücretsiz Kayıt Ol</button>
+          </div>
+
+          <p class="auth-subtext" id="auth-subtext">
+            Giriş yaptığınızda özel kelimeleriniz ve izleme istatistikleriniz bulutta güvenle saklanır.
+          </p>
+
+          <button type="button" class="btn-google-auth" id="btn-google-auth">
+            <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.66-5.17 3.66-9.12z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.13C3.26 21.36 7.33 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.57H1.25C.45 8.15 0 9.99 0 12s.45 3.85 1.25 5.43l4.03-3.14z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.57l4.03 3.14c.95-2.83 3.6-4.96 6.72-4.96z"/>
+            </svg>
+            <span id="btn-google-text">Google ile Devam Et</span>
+          </button>
+
+          <div class="auth-divider">
+            <span>veya e-posta ile</span>
+          </div>
+
+          <form id="form-auth" class="modal-form">
+            <div class="form-group">
+              <label for="auth-email">E-posta Adresi</label>
+              <input type="email" id="auth-email" required placeholder="ornek@eposta.com" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+              <label for="auth-password">Şifre</label>
+              <input type="password" id="auth-password" required placeholder="En az 6 karakter" autocomplete="current-password" minlength="6">
+            </div>
+
+            <div id="auth-message" class="auth-message" style="display: none;"></div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-auth">Vazgeç</button>
+              <button type="submit" class="btn-submit" id="btn-submit-auth">Giriş Yap</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ==================== PROFİL / ÇIKIŞ MODALI ==================== -->
+      <div id="profile-modal" class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 class="modal-title">Hesap Bilgileri</h3>
+            <button class="close-modal-btn" id="close-profile-modal">&times;</button>
+          </div>
+          <div class="profile-info-body" style="padding: 10px 0 16px;">
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Giriş yapılmış hesap:</p>
+            <p id="profile-user-email" style="font-size: 15px; font-weight: 600; color: var(--text-main); word-break: break-all;"></p>
+            <p style="font-size: 12px; color: #166534; background: #dcfce7; padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 10px; display: inline-flex; align-items: center; gap: 4px;">
+              ✓ Bulut senkronizasyonu aktif (Supabase)
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel" id="btn-close-profile">Kapat</button>
+            <button type="button" class="btn-danger" id="btn-logout">Çıkış Yap</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Bildirimi -->
+      <div id="toast-notification" class="toast-notification"></div>
+
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
