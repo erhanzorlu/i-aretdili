@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,26 +8,36 @@
   <title>TİD Defteri - İşaret Dili Sözlüğü</title>
   <link rel="stylesheet" href="./style.css">
 </head>
+
 <body>
   <div class="app-wrapper">
     <div class="mobile-container">
-      
+
       <!-- Üst Başlık -->
       <header class="app-header">
         <div class="header-top">
           <div class="brand">
             <div>
-              <span class="brand-badge">ÖĞRENME GÜNLÜĞÜ</span>
+              <span class="brand-badge">ÖĞRENME GÜNLÜĞÜ v1</span>
               <h1 class="brand-title">İşaret Dili Defterim</h1>
             </div>
           </div>
           <div class="header-actions">
             <button id="btn-auth" class="btn-auth-pill" title="Hesap / Giriş Yap">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
               <span id="auth-status-text">Giriş Yap</span>
             </button>
             <button id="btn-export-data" class="header-action-btn" title="Yedek Al / Kodu Kopyala">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
             </button>
           </div>
         </div>
@@ -63,11 +74,15 @@
 
       <!-- Ana İçerik -->
       <main class="app-main">
-        
+
         <!-- ==================== SEKME 1: KELİMELER ==================== -->
         <section id="section-words" class="tab-content active">
           <div class="search-box">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input type="text" id="search-input" placeholder="Kelime veya not ara..." autocomplete="off">
             <button id="clear-search" class="clear-btn hidden">&times;</button>
           </div>
@@ -86,8 +101,10 @@
             <div class="scroll-label category-header-row">
               <span class="category-header-title">Kategoriler</span>
               <div class="category-header-actions">
-                <button id="btn-quick-add-cat" type="button" class="cat-header-btn" title="Yeni Kategori Ekle">+ Ekle</button>
-                <button id="btn-manage-cats" type="button" class="cat-header-btn" title="Kategorileri Düzenle veya Sil">⚙️ Yönet</button>
+                <button id="btn-quick-add-cat" type="button" class="cat-header-btn" title="Yeni Kategori Ekle">+
+                  Ekle</button>
+                <button id="btn-manage-cats" type="button" class="cat-header-btn"
+                  title="Kategorileri Düzenle veya Sil">⚙️ Yönet</button>
               </div>
             </div>
             <div class="category-chips" id="category-chips-list">
@@ -111,14 +128,20 @@
         <section id="section-sentences" class="tab-content">
           <div class="section-intro-card">
             <div class="intro-title">TİD Cümle Dizilimi</div>
-            <p class="intro-desc">İşaret dilinde Türkçe ekler yerine kök kelimeler peş peşe gelir. Kaydettiğin cümlelerde işaret sıralamasını görebilirsin.</p>
-            <button id="btn-goto-sentence-gen" type="button" class="btn-action primary-gen" style="margin-top: 8px; font-size: 11.5px; padding: 5px 12px; display: inline-flex;">
+            <p class="intro-desc">İşaret dilinde Türkçe ekler yerine kök kelimeler peş peşe gelir. Kaydettiğin
+              cümlelerde işaret sıralamasını görebilirsin.</p>
+            <button id="btn-goto-sentence-gen" type="button" class="btn-action primary-gen"
+              style="margin-top: 8px; font-size: 11.5px; padding: 5px 12px; display: inline-flex;">
               ⚡ Rastgele Cümle & Akış Pratiği Yap
             </button>
           </div>
 
           <div class="search-box">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input type="text" id="search-sentence-input" placeholder="Cümle ara...">
           </div>
 
@@ -129,7 +152,7 @@
 
         <!-- ==================== SEKME 3: PRATİK & TEST ==================== -->
         <section id="section-practice" class="tab-content">
-          
+
           <!-- Pratik Modu Seçici (Tek Kelime vs Akıcı Cümle) -->
           <div class="practice-mode-nav">
             <button type="button" class="practice-mode-btn active" id="btn-mode-word" data-mode="word">
@@ -263,7 +286,8 @@
 
       <!-- Yüzen Ekle Butonu (+) -->
       <button id="btn-fab-add" class="floating-add-btn" title="Yeni Kayıt Ekle">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
@@ -282,7 +306,9 @@
           </div>
 
           <div class="video-container" id="video-frame-wrapper">
-            <iframe id="video-iframe" src="" title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe id="video-iframe" src="" title="Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
             <img id="media-image" src="" alt="İşaret Dili Görseli/GIF" referrerpolicy="no-referrer">
           </div>
 
@@ -299,11 +325,17 @@
               Öğrendim Olarak İşaretle
             </button>
             <button class="btn-sheet-edit" id="btn-sheet-edit-item" title="Bu kaydı düzenle">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
               Düzenle
             </button>
             <button class="btn-sheet-delete" id="btn-sheet-delete-item" title="Bu kaydı sil">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
               Sil
             </button>
           </div>
@@ -350,7 +382,8 @@
 
             <div class="form-group">
               <label for="word-notes">Not / İpucu</label>
-              <textarea id="word-notes" rows="2" placeholder="El şekli, mimikler veya dikkat edilecek püf noktası..."></textarea>
+              <textarea id="word-notes" rows="2"
+                placeholder="El şekli, mimikler veya dikkat edilecek püf noktası..."></textarea>
             </div>
 
             <div class="modal-actions">
@@ -422,18 +455,20 @@
           </div>
 
           <p class="manage-cat-subtext">
-            Kategorileri yeniden adlandırabilir, silebilir veya yeni kategori ekleyebilirsiniz. Kategori silindiğinde kelimeler silinmez, "Genel" kategorisine aktarılır.
+            Kategorileri yeniden adlandırabilir, silebilir veya yeni kategori ekleyebilirsiniz. Kategori silindiğinde
+            kelimeler silinmez, "Genel" kategorisine aktarılır.
           </p>
 
           <form id="form-manage-add-category" class="manage-add-cat-form">
-            <input type="text" id="manage-new-cat-input" required placeholder="Yeni kategori adı yazın..." maxlength="40" class="manage-cat-input">
+            <input type="text" id="manage-new-cat-input" required placeholder="Yeni kategori adı yazın..."
+              maxlength="40" class="manage-cat-input">
             <button type="submit" class="btn-submit" style="padding: 8px 14px; white-space: nowrap;">+ Ekle</button>
           </form>
 
           <div class="manage-cat-list-header">
             Mevcut Kategoriler
           </div>
-          
+
           <div class="manage-categories-list" id="manage-categories-list">
             <!-- Dinamik doldurulur -->
           </div>
@@ -451,8 +486,9 @@
             <h3 class="modal-title">Veri Yedeği</h3>
             <button class="close-modal-btn" id="close-export-modal">&times;</button>
           </div>
-          <p class="export-desc">Eklediğin kelimelerin kod çıktısı aşağıdadır. İstersen doğrudan <code>data.js</code> dosyana da yapıştırabilirsin.</p>
-          
+          <p class="export-desc">Eklediğin kelimelerin kod çıktısı aşağıdadır. İstersen doğrudan <code>data.js</code>
+            dosyana da yapıştırabilirsin.</p>
+
           <div class="code-box-wrapper">
             <textarea id="export-code-area" readonly rows="10"></textarea>
           </div>
@@ -498,10 +534,14 @@
 
           <button type="button" class="btn-google-auth" id="btn-google-auth">
             <svg class="google-icon" width="18" height="18" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.66-5.17 3.66-9.12z"/>
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.13C3.26 21.36 7.33 24 12 24z"/>
-              <path fill="#FBBC05" d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.57H1.25C.45 8.15 0 9.99 0 12s.45 3.85 1.25 5.43l4.03-3.14z"/>
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.57l4.03 3.14c.95-2.83 3.6-4.96 6.72-4.96z"/>
+              <path fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.66-5.17 3.66-9.12z" />
+              <path fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.13C3.26 21.36 7.33 24 12 24z" />
+              <path fill="#FBBC05"
+                d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.57H1.25C.45 8.15 0 9.99 0 12s.45 3.85 1.25 5.43l4.03-3.14z" />
+              <path fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.57l4.03 3.14c.95-2.83 3.6-4.96 6.72-4.96z" />
             </svg>
             <span id="btn-google-text">Google ile Devam Et</span>
           </button>
@@ -518,7 +558,8 @@
 
             <div class="form-group">
               <label for="auth-password">Şifre</label>
-              <input type="password" id="auth-password" required placeholder="En az 6 karakter" autocomplete="current-password" minlength="6">
+              <input type="password" id="auth-password" required placeholder="En az 6 karakter"
+                autocomplete="current-password" minlength="6">
             </div>
 
             <div id="auth-message" class="auth-message" style="display: none;"></div>
@@ -540,8 +581,10 @@
           </div>
           <div class="profile-info-body" style="padding: 10px 0 16px;">
             <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">Giriş yapılmış hesap:</p>
-            <p id="profile-user-email" style="font-size: 15px; font-weight: 600; color: var(--text-main); word-break: break-all;"></p>
-            <p style="font-size: 12px; color: #166534; background: #dcfce7; padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 10px; display: inline-flex; align-items: center; gap: 4px;">
+            <p id="profile-user-email"
+              style="font-size: 15px; font-weight: 600; color: var(--text-main); word-break: break-all;"></p>
+            <p
+              style="font-size: 12px; color: #166534; background: #dcfce7; padding: 6px 10px; border-radius: var(--radius-sm); margin-top: 10px; display: inline-flex; align-items: center; gap: 4px;">
               ✓ Bulut senkronizasyonu aktif (Supabase)
             </p>
           </div>
@@ -560,4 +603,5 @@
 
   <script type="module" src="./app.js"></script>
 </body>
+
 </html>
