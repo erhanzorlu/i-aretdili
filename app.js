@@ -19,17 +19,15 @@ let state = {
   authTab: 'login',
   activeTab: 'words',
   activeCategory: 'all',
-  activeWeek: 'all',
   activeSort: 'default',
   practiceMode: 'word', // 'word' | 'sentence-generator'
   practiceCategory: 'all',
-  practiceWeek: 'all',
   genSentenceLength: 3,
   genCategory: 'all',
-  genWeek: 'all',
   currentGeneratedSentence: [],
   searchQuery: '',
   sentenceSearchQuery: '',
+  categorySearchQuery: '',
   currentFlashcard: null,
   activeVideoItem: null
 };
@@ -363,51 +361,39 @@ function updateStatsHeader() {
   if (unuttuklarimBadge) unuttuklarimBadge.textContent = forgottenCount;
 }
 
-// Kategori ve Hafta Çiplerini Çiz
+// Kategori Çiplerini Çiz
 function renderFilterChips() {
   const categoryChipsList = document.getElementById('category-chips-list');
-  const weekChipsList = document.getElementById('week-chips-list');
 
   // Kategoriler
   if (categoryChipsList) {
+    const q = (state.categorySearchQuery || '').toLowerCase().trim();
+    const visibleCategories = q
+      ? state.categories.filter(c => c.name.toLowerCase().includes(q))
+      : state.categories;
+
     let catHtml = `<button class="chip-btn ${state.activeCategory === 'all' ? 'active' : ''}" data-cat="all">Tümü</button>`;
-    state.categories.forEach(cat => {
-      catHtml += `
-        <button class="chip-btn ${state.activeCategory === cat.id ? 'active' : ''}" data-cat="${cat.id}">
-          ${cat.name}
-        </button>
-      `;
-    });
+
+    if (visibleCategories.length === 0) {
+      catHtml += `<span class="no-cat-found">"${escapeHtml(state.categorySearchQuery)}" bulunamadı</span>`;
+    } else {
+      visibleCategories.forEach(cat => {
+        catHtml += `
+          <button class="chip-btn ${state.activeCategory === cat.id ? 'active' : ''}" data-cat="${cat.id}">
+            ${escapeHtml(cat.name)}
+          </button>
+        `;
+      });
+    }
+
     categoryChipsList.innerHTML = catHtml;
 
     categoryChipsList.querySelectorAll('.chip-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         state.activeCategory = btn.getAttribute('data-cat');
-        renderFilterChips();
-        renderWordsList();
-      });
-    });
-  }
-
-  // Haftalar
-  if (weekChipsList) {
-    const weeksSet = new Set(state.words.map(w => w.week).filter(Boolean));
-    const sortedWeeks = Array.from(weeksSet).sort((a, b) => a - b);
-
-    let weekHtml = `<button class="chip-btn ${state.activeWeek === 'all' ? 'active' : ''}" data-week="all">Tümü</button>`;
-    sortedWeeks.forEach(w => {
-      weekHtml += `
-        <button class="chip-btn ${state.activeWeek === String(w) ? 'active' : ''}" data-week="${w}">
-          ${w}. Hafta
-        </button>
-      `;
-    });
-    weekChipsList.innerHTML = weekHtml;
-
-    weekChipsList.querySelectorAll('.chip-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.activeWeek = btn.getAttribute('data-week');
-        renderFilterChips();
+        categoryChipsList.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         renderWordsList();
       });
     });
@@ -429,9 +415,7 @@ function populateCategorySelects() {
 
 function populatePracticeFilters() {
   const catSelect = document.getElementById('practice-category-select');
-  const weekSelect = document.getElementById('practice-week-select');
   const genCatSelect = document.getElementById('gen-category-select');
-  const genWeekSelect = document.getElementById('gen-week-select');
 
   const populateCat = (select, currentVal) => {
     if (!select) return;
@@ -443,22 +427,8 @@ function populatePracticeFilters() {
     select.innerHTML = catOptions;
   };
 
-  const populateWeek = (select, currentVal) => {
-    if (!select) return;
-    const weeksSet = new Set(state.words.map(w => w.week).filter(Boolean));
-    const sortedWeeks = Array.from(weeksSet).sort((a, b) => a - b);
-    let weekOptions = `<option value="all" ${currentVal === 'all' ? 'selected' : ''}>Tüm Haftalar</option>`;
-    sortedWeeks.forEach(w => {
-      const count = state.words.filter(item => item.week === w).length;
-      weekOptions += `<option value="${w}" ${currentVal === String(w) ? 'selected' : ''}>${w}. Hafta (${count})</option>`;
-    });
-    select.innerHTML = weekOptions;
-  };
-
   populateCat(catSelect, state.practiceCategory || 'all');
-  populateWeek(weekSelect, state.practiceWeek || 'all');
   populateCat(genCatSelect, state.genCategory || 'all');
-  populateWeek(genWeekSelect, state.genWeek || 'all');
 }
 
 let pendingConfirmCallback = null;
@@ -483,13 +453,11 @@ function openEditWordModal(word) {
 
   const wordInput = document.getElementById('word-input');
   const catInput = document.getElementById('word-category');
-  const weekInput = document.getElementById('word-week');
   const ytInput = document.getElementById('word-yt');
   const notesInput = document.getElementById('word-notes');
 
   if (wordInput) wordInput.value = word.word || '';
   if (catInput) catInput.value = word.category || 'diger';
-  if (weekInput) weekInput.value = word.week || 1;
   if (ytInput) ytInput.value = word.ytUrl || '';
   if (notesInput) notesInput.value = word.notes || '';
 
@@ -514,14 +482,12 @@ function openEditSentenceModal(sentence) {
   const trInput = document.getElementById('sentence-turkish');
   const tidInput = document.getElementById('sentence-tid');
   const catInput = document.getElementById('sentence-category');
-  const weekInput = document.getElementById('sentence-week');
   const ytInput = document.getElementById('sentence-yt');
   const notesInput = document.getElementById('sentence-notes');
 
   if (trInput) trInput.value = sentence.turkish || '';
   if (tidInput) tidInput.value = (sentence.tidOrder || []).join(', ');
   if (catInput) catInput.value = sentence.category || 'diger';
-  if (weekInput) weekInput.value = sentence.week || 1;
   if (ytInput) ytInput.value = sentence.ytUrl || '';
   if (notesInput) notesInput.value = sentence.notes || '';
 
@@ -547,23 +513,21 @@ function renderWordsList() {
 
   let filtered = [...state.words];
 
-  // Arama
+  // Arama (Kelime, Not veya Kategori adıyla eşleşme)
   if (state.searchQuery.trim() !== '') {
     const q = state.searchQuery.toLowerCase().trim();
-    filtered = filtered.filter(w => 
-      w.word.toLowerCase().includes(q) || 
-      (w.notes && w.notes.toLowerCase().includes(q))
-    );
+    filtered = filtered.filter(w => {
+      const cat = state.categories.find(c => c.id === w.category);
+      const catName = cat ? cat.name.toLowerCase() : '';
+      return w.word.toLowerCase().includes(q) || 
+             (w.notes && w.notes.toLowerCase().includes(q)) ||
+             catName.includes(q);
+    });
   }
 
   // Kategori Filtresi
   if (state.activeCategory !== 'all') {
     filtered = filtered.filter(w => w.category === state.activeCategory);
-  }
-
-  // Hafta Filtresi
-  if (state.activeWeek !== 'all') {
-    filtered = filtered.filter(w => String(w.week) === state.activeWeek);
   }
 
   // Sıralama
@@ -617,7 +581,6 @@ function renderWordsList() {
           <h3 class="word-name">${escapeHtml(item.word)}</h3>
           <div class="card-badges">
             <span class="category-tag">${cat.name}</span>
-            ${item.week ? `<span class="week-tag">${item.week}. Hafta</span>` : ''}
             <button class="btn-edit" data-action="edit-word" data-id="${item.id}" title="Kelimeyi Düzenle">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               Düzenle
@@ -787,7 +750,6 @@ function renderSentencesList() {
           <h3 class="sentence-turkish">${escapeHtml(item.turkish)}</h3>
           <div class="card-badges">
             <span class="category-tag">${cat.name}</span>
-            ${item.week ? `<span class="week-tag">${item.week}. Hafta</span>` : ''}
             <button class="btn-edit" data-action="edit-sentence" data-id="${item.id}" title="Cümleyi Düzenle">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
               Düzenle
@@ -970,11 +932,6 @@ function loadRandomFlashcard() {
     pool = pool.filter(w => w.category === state.practiceCategory);
   }
 
-  // Hafta Filtresi
-  if (state.practiceWeek && state.practiceWeek !== 'all') {
-    pool = pool.filter(w => String(w.week) === state.practiceWeek);
-  }
-
   if (pool.length === 0) {
     if (catEl) catEl.textContent = '-';
     if (wordEl) wordEl.textContent = 'Kelime Bulunamadı';
@@ -986,7 +943,7 @@ function loadRandomFlashcard() {
   }
 
   if (poolCountEl) {
-    const isFiltered = (state.practiceCategory !== 'all' || state.practiceWeek !== 'all');
+    const isFiltered = (state.practiceCategory !== 'all');
     poolCountEl.textContent = isFiltered ? `Havuz: ${pool.length} kelime` : `Tüm Havuz: ${pool.length} kelime`;
   }
 
@@ -1039,12 +996,8 @@ function generateRandomSentence() {
     pool = pool.filter(w => w.category === state.genCategory);
   }
 
-  if (state.genWeek && state.genWeek !== 'all') {
-    pool = pool.filter(w => String(w.week) === state.genWeek);
-  }
-
   if (poolCountEl) {
-    const isFiltered = (state.genCategory !== 'all' || state.genWeek !== 'all');
+    const isFiltered = (state.genCategory !== 'all');
     poolCountEl.textContent = isFiltered ? `Havuz: ${pool.length} kelime` : `Tüm Havuz: ${pool.length} kelime`;
   }
 
@@ -1416,7 +1369,6 @@ function initModals() {
   const btnCancelWord = document.getElementById('btn-cancel-word');
   const btnCancelSentence = document.getElementById('btn-cancel-sentence');
   const btnCancelCat = document.getElementById('btn-cancel-category');
-  const btnQuickAddCat = document.getElementById('btn-quick-add-cat');
 
   // Auth Modalı Elemanları
   const btnAuth = document.getElementById('btn-auth');
@@ -1699,19 +1651,11 @@ function initModals() {
     formSentence?.classList.add('hidden');
   });
 
-  btnQuickAddCat?.addEventListener('click', () => {
-    openCategoriesModal();
-    setTimeout(() => {
-      manageNewCatInput?.focus();
-    }, 100);
-  });
-
   // Kelime Kaydet / Güncelle
   formWord?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const wordInput = document.getElementById('word-input');
     const catInput = document.getElementById('word-category');
-    const weekInput = document.getElementById('word-week');
     const ytInput = document.getElementById('word-yt');
     const notesInput = document.getElementById('word-notes');
 
@@ -1726,7 +1670,7 @@ function initModals() {
 
         existing.word = wordInput.value.trim();
         existing.category = catInput.value;
-        existing.week = parseInt(weekInput.value, 10) || 1;
+        existing.week = existing.week || 1;
         existing.ytUrl = ytInput.value.trim();
         existing.notes = notesInput.value.trim();
 
@@ -1757,7 +1701,7 @@ function initModals() {
         id: newId,
         word: wordInput.value.trim(),
         category: catInput.value,
-        week: parseInt(weekInput.value, 10) || 1,
+        week: 1,
         ytUrl: ytInput.value.trim(),
         notes: notesInput.value.trim(),
         userId: state.currentUser.id,
@@ -1795,7 +1739,6 @@ function initModals() {
     const trInput = document.getElementById('sentence-turkish');
     const tidInput = document.getElementById('sentence-tid');
     const catInput = document.getElementById('sentence-category');
-    const weekInput = document.getElementById('sentence-week');
     const ytInput = document.getElementById('sentence-yt');
     const notesInput = document.getElementById('sentence-notes');
 
@@ -1810,7 +1753,7 @@ function initModals() {
         existing.turkish = trInput.value.trim();
         existing.tidOrder = tidTokens;
         existing.category = catInput.value;
-        existing.week = parseInt(weekInput.value, 10) || 1;
+        existing.week = existing.week || 1;
         existing.ytUrl = ytInput.value.trim();
         existing.notes = notesInput.value.trim();
       }
@@ -1820,7 +1763,7 @@ function initModals() {
         turkish: trInput.value.trim(),
         tidOrder: tidTokens,
         category: catInput.value,
-        week: parseInt(weekInput.value, 10) || 1,
+        week: 1,
         ytUrl: ytInput.value.trim(),
         notes: notesInput.value.trim(),
         clickCount: 0
@@ -2024,6 +1967,37 @@ function initSearchAndFilters() {
     renderSentencesList();
   });
 
+  // Kategori İçi Arama Dinleyicileri
+  const btnToggleCatSearch = document.getElementById('btn-toggle-cat-search');
+  const catSearchBar = document.getElementById('cat-search-bar');
+  const catSearchInput = document.getElementById('cat-search-input');
+  const btnClearCatSearch = document.getElementById('btn-clear-cat-search');
+
+  btnToggleCatSearch?.addEventListener('click', () => {
+    const isHidden = catSearchBar?.classList.toggle('hidden');
+    btnToggleCatSearch.classList.toggle('active', !isHidden);
+    if (!isHidden) {
+      catSearchInput?.focus();
+    } else {
+      state.categorySearchQuery = '';
+      if (catSearchInput) catSearchInput.value = '';
+      renderFilterChips();
+    }
+  });
+
+  catSearchInput?.addEventListener('input', (e) => {
+    state.categorySearchQuery = e.target.value;
+    renderFilterChips();
+  });
+
+  btnClearCatSearch?.addEventListener('click', () => {
+    state.categorySearchQuery = '';
+    if (catSearchInput) catSearchInput.value = '';
+    catSearchBar?.classList.add('hidden');
+    btnToggleCatSearch?.classList.remove('active');
+    renderFilterChips();
+  });
+
   document.querySelectorAll('.pill-toggle').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.pill-toggle').forEach(p => p.classList.remove('active'));
@@ -2033,17 +2007,11 @@ function initSearchAndFilters() {
     });
   });
 
-  // Pratik / Test Kategori ve Hafta Filtresi
+  // Pratik / Test Kategori Filtresi
   const practiceCatSelect = document.getElementById('practice-category-select');
-  const practiceWeekSelect = document.getElementById('practice-week-select');
 
   practiceCatSelect?.addEventListener('change', (e) => {
     state.practiceCategory = e.target.value;
-    loadRandomFlashcard();
-  });
-
-  practiceWeekSelect?.addEventListener('change', (e) => {
-    state.practiceWeek = e.target.value;
     loadRandomFlashcard();
   });
 
@@ -2116,17 +2084,11 @@ function initSearchAndFilters() {
     });
   });
 
-  // Cümle Üreteci Kategori ve Hafta Filtresi
+  // Cümle Üreteci Kategori Filtresi
   const genCatSelect = document.getElementById('gen-category-select');
-  const genWeekSelect = document.getElementById('gen-week-select');
 
   genCatSelect?.addEventListener('change', (e) => {
     state.genCategory = e.target.value;
-    generateRandomSentence();
-  });
-
-  genWeekSelect?.addEventListener('change', (e) => {
-    state.genWeek = e.target.value;
     generateRandomSentence();
   });
 
