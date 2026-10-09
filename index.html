@@ -334,6 +334,66 @@
         </div>
       </div>
 
+      <!-- ==================== CÜMLE AKIŞ OYNATICI MODALI ==================== -->
+      <div id="sentence-flow-modal" class="modal-overlay">
+        <div class="modal-card flow-player-card">
+          <div class="modal-header">
+            <div>
+              <span class="sheet-badge">TİD Akış Oynatıcı</span>
+              <h3 class="modal-title" id="flow-modal-title">Cümle Akışı</h3>
+            </div>
+            <button class="close-modal-btn" id="close-flow-modal">&times;</button>
+          </div>
+
+          <!-- Kelime Sıralama Adımları -->
+          <div class="flow-steps-strip" id="flow-steps-strip">
+            <!-- Dinamik: [DÜN] [AKŞAM] [ARKADAŞ] [GÖRMEK] -->
+          </div>
+
+          <!-- Süre İlerleme Çubuğu -->
+          <div class="flow-progress-bar-container">
+            <div class="flow-progress-bar" id="flow-progress-bar"></div>
+          </div>
+
+          <!-- Medya Ekranı (GIF / Video) -->
+          <div class="flow-media-screen" id="flow-media-screen">
+            <img id="flow-media-img" src="" alt="Kelime İşareti GIF" referrerpolicy="no-referrer">
+            <iframe id="flow-media-iframe" src="" title="Video" allowfullscreen></iframe>
+            <div id="flow-media-fallback" class="flow-media-fallback">
+              <span class="fallback-icon">🤟</span>
+              <div class="fallback-word" id="flow-fallback-word">-</div>
+              <p class="fallback-text">Bu kelime için henüz GIF / video eklenmemiş.</p>
+            </div>
+          </div>
+
+          <!-- Aktif Kelime Bilgisi -->
+          <div class="flow-current-info">
+            <div class="flow-current-title-row">
+              <span class="flow-current-badge" id="flow-current-counter">1 / 4</span>
+              <h4 class="flow-current-word" id="flow-current-word-title">-</h4>
+            </div>
+            <p class="flow-current-notes" id="flow-current-notes">Not eklenmemiş.</p>
+          </div>
+
+          <!-- Oynatıcı Kontrol Çubuğu -->
+          <div class="flow-controls-row">
+            <button type="button" class="btn-flow-control" id="btn-flow-prev" title="Önceki İşaret">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+              Önceki
+            </button>
+            <button type="button" class="btn-flow-play-pause" id="btn-flow-play-pause" title="Oynat / Duraklat">
+              <svg id="icon-flow-pause" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              <svg id="icon-flow-play" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: none;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="text-flow-play-pause">Duraklat</span>
+            </button>
+            <button type="button" class="btn-flow-control" id="btn-flow-next" title="Sonraki İşaret">
+              Sonraki
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ==================== EKLEME / DÜZENLEME MODALI ==================== -->
       <div id="add-modal" class="modal-overlay">
         <div class="modal-card">

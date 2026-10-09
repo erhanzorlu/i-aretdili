@@ -696,6 +696,30 @@ function toggleWordStatus(wordId) {
   renderTopForgottenList();
 }
 
+// Kelime Etiketini Sözlükte Bul (Türkçe Harf, Büyük/Küçük ve Parçalı Eşleşme)
+function findWordByTag(tag) {
+  if (!tag) return null;
+  const cleanTag = tag.trim().toLocaleLowerCase('tr-TR');
+
+  // 1. Birebir Tam Eşleşme
+  let found = state.words.find(w => w.word.toLocaleLowerCase('tr-TR') === cleanTag);
+  if (found) return found;
+
+  // 2. Çift / Çizgili Kelimeler (Örn: "Var - Yok" -> "Var" veya "Yok", "Evli - Eş" -> "Evli" veya "Eş")
+  found = state.words.find(w => {
+    const parts = w.word.toLocaleLowerCase('tr-TR').split(/[\s\-\/–,]+/).map(p => p.trim());
+    return parts.includes(cleanTag);
+  });
+  if (found) return found;
+
+  // 3. Başlangıç veya Kapsama Eşleşmesi (Örn: "Görmek" -> "Bakmak - Görmek")
+  found = state.words.find(w => {
+    const wLower = w.word.toLocaleLowerCase('tr-TR');
+    return wLower.includes(cleanTag) || cleanTag.includes(wLower);
+  });
+  return found || null;
+}
+
 // Cümleler Listesini Çiz
 function renderSentencesList() {
   const container = document.getElementById('sentences-cards-container');
@@ -740,9 +764,21 @@ function renderSentencesList() {
 
   container.innerHTML = filtered.map(item => {
     const cat = state.categories.find(c => c.id === item.category) || { name: 'Genel' };
-    const tidTagsHtml = (item.tidOrder || []).map(tag => 
-      `<span class="tid-tag">${escapeHtml(tag)}</span>`
-    ).join('');
+    const tidTagsHtml = (item.tidOrder || []).map(tag => {
+      const matched = findWordByTag(tag);
+      const hasMedia = Boolean(matched && matched.ytUrl);
+      const titleText = matched
+        ? (hasMedia ? `${matched.word} (GIF izlemek için tıkla)` : `${matched.word} (Görsel eklenmemiş)`)
+        : `${tag} (Sözlükte henüz kayıtlı değil)`;
+
+      return `
+        <button type="button" class="tid-tag ${hasMedia ? 'has-media' : 'no-media'}" 
+          data-action="inspect-tag" data-tag="${escapeHtml(tag)}" title="${escapeHtml(titleText)}">
+          ${hasMedia ? `<svg class="tag-play-icon" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>` : ''}
+          ${escapeHtml(tag)}
+        </button>
+      `;
+    }).join('');
 
     return `
       <div class="sentence-card" data-id="${item.id}">
@@ -761,7 +797,14 @@ function renderSentencesList() {
           </div>
         </div>
 
-        <div class="tid-order-label">İşaret Dili Sırası:</div>
+        <div class="tid-order-row">
+          <div class="tid-order-label">İşaret Dili Sırası:</div>
+          <button type="button" class="btn-flow-play" data-action="play-flow" data-id="${item.id}" title="Bu cümlenin tüm işaretlerini sırayla oynat">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Akışı Oynat
+          </button>
+        </div>
+
         <div class="tid-sequence-tags">
           ${tidTagsHtml}
         </div>
@@ -781,6 +824,32 @@ function renderSentencesList() {
       </div>
     `;
   }).join('');
+
+  // Kelime Etiketine Tıklama Dinleyicisi
+  container.querySelectorAll('[data-action="inspect-tag"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tag = btn.getAttribute('data-tag');
+      const matched = findWordByTag(tag);
+      if (matched && matched.ytUrl) {
+        openVideoBottomSheet(matched, 'word');
+      } else if (matched) {
+        showToast(`"${matched.word}" kayıtlı ancak henüz GIF/video eklenmemiş.`);
+      } else {
+        showToast(`"${tag}" kelimesi henüz sözlüğe eklenmemiş.`);
+      }
+    });
+  });
+
+  // Sırayla Oynat (Akış) Butonu Dinleyicisi
+  container.querySelectorAll('[data-action="play-flow"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      const item = state.sentences.find(s => s.id === id);
+      if (item) openSentenceFlowModal(item);
+    });
+  });
 
   container.querySelectorAll('[data-action="play-sentence"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -914,6 +983,225 @@ function closeVideoBottomSheet() {
   if (imgEl) {
     imgEl.src = '';
     imgEl.style.display = 'none';
+  }
+}
+
+// ==========================================
+// Cümle Akış Oynatıcı (Sequence Player)
+// ==========================================
+let flowState = {
+  sentence: null,
+  items: [],
+  currentIndex: 0,
+  isPlaying: true,
+  progressInterval: null,
+  stepDuration: 2800
+};
+
+function openSentenceFlowModal(sentence) {
+  if (!sentence || !sentence.tidOrder || sentence.tidOrder.length === 0) {
+    showToast('Bu cümlenin işaret sırası bulunmuyor.');
+    return;
+  }
+
+  flowState.sentence = sentence;
+  flowState.items = sentence.tidOrder.map(tag => {
+    const wordItem = findWordByTag(tag);
+    const hasMedia = Boolean(wordItem && wordItem.ytUrl);
+    return { tag, wordItem, hasMedia };
+  });
+
+  flowState.currentIndex = 0;
+  flowState.isPlaying = true;
+
+  const modal = document.getElementById('sentence-flow-modal');
+  const titleEl = document.getElementById('flow-modal-title');
+  if (titleEl) titleEl.textContent = sentence.turkish;
+
+  modal?.classList.add('active');
+  renderFlowStep();
+  startFlowTimer();
+}
+
+function closeSentenceFlowModal() {
+  stopFlowTimer();
+  const modal = document.getElementById('sentence-flow-modal');
+  modal?.classList.remove('active');
+
+  const imgEl = document.getElementById('flow-media-img');
+  const iframeEl = document.getElementById('flow-media-iframe');
+  if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+  if (iframeEl) { iframeEl.src = ''; iframeEl.style.display = 'none'; }
+}
+
+function renderFlowStep() {
+  if (!flowState.items || flowState.items.length === 0) return;
+  const current = flowState.items[flowState.currentIndex];
+  if (!current) return;
+
+  // 1. Adım Hapları
+  const stepsStrip = document.getElementById('flow-steps-strip');
+  if (stepsStrip) {
+    stepsStrip.innerHTML = flowState.items.map((item, idx) => {
+      const isActive = (idx === flowState.currentIndex);
+      const activeClass = isActive ? 'active' : '';
+      const mediaClass = item.hasMedia ? 'has-media' : '';
+      return `
+        <button type="button" class="flow-step-pill ${activeClass} ${mediaClass}" data-step-idx="${idx}">
+          ${idx + 1}. ${escapeHtml(item.tag)}
+        </button>
+      `;
+    }).join('');
+
+    stepsStrip.querySelectorAll('.flow-step-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-step-idx'), 10);
+        jumpToFlowStep(idx);
+      });
+    });
+
+    const activePill = stepsStrip.querySelector('.flow-step-pill.active');
+    activePill?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
+  // 2. Metin Bilgileri
+  const counterEl = document.getElementById('flow-current-counter');
+  const wordTitleEl = document.getElementById('flow-current-word-title');
+  const notesEl = document.getElementById('flow-current-notes');
+
+  if (counterEl) counterEl.textContent = `${flowState.currentIndex + 1} / ${flowState.items.length}`;
+  if (wordTitleEl) wordTitleEl.textContent = current.wordItem ? current.wordItem.word : current.tag;
+  if (notesEl) {
+    notesEl.textContent = current.wordItem?.notes
+      ? current.wordItem.notes
+      : (current.hasMedia ? 'TİD İşareti' : 'Bu kelime için henüz not veya GIF eklenmemiş.');
+  }
+
+  // 3. Medya Ekranı (GIF / Video)
+  const imgEl = document.getElementById('flow-media-img');
+  const iframeEl = document.getElementById('flow-media-iframe');
+  const fallbackEl = document.getElementById('flow-media-fallback');
+  const fallbackWord = document.getElementById('flow-fallback-word');
+
+  if (current.hasMedia) {
+    if (fallbackEl) fallbackEl.style.display = 'none';
+    const ytUrl = current.wordItem.ytUrl;
+    const isImage = ytUrl.match(/\.(gif|png|jpe?g|webp)($|\?)/i) || ytUrl.includes('isaretce.com');
+
+    if (isImage) {
+      if (iframeEl) { iframeEl.src = ''; iframeEl.style.display = 'none'; }
+      if (imgEl) {
+        imgEl.src = ytUrl;
+        imgEl.style.display = 'block';
+      }
+    } else {
+      if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+      const embedUrl = parseYouTubeUrl(ytUrl);
+      if (embedUrl && iframeEl) {
+        iframeEl.src = embedUrl;
+        iframeEl.style.display = 'block';
+      }
+    }
+  } else {
+    if (imgEl) { imgEl.src = ''; imgEl.style.display = 'none'; }
+    if (iframeEl) { iframeEl.src = ''; iframeEl.style.display = 'none'; }
+    if (fallbackEl) {
+      if (fallbackWord) fallbackWord.textContent = current.tag;
+      fallbackEl.style.display = 'flex';
+    }
+  }
+
+  // 4. Önceki butonu
+  const prevBtn = document.getElementById('btn-flow-prev');
+  if (prevBtn) prevBtn.disabled = (flowState.currentIndex === 0);
+
+  updateFlowPlayPauseButton();
+}
+
+function updateFlowPlayPauseButton() {
+  const pauseIcon = document.getElementById('icon-flow-pause');
+  const playIcon = document.getElementById('icon-flow-play');
+  const textEl = document.getElementById('text-flow-play-pause');
+
+  if (flowState.isPlaying) {
+    if (pauseIcon) pauseIcon.style.display = 'block';
+    if (playIcon) playIcon.style.display = 'none';
+    if (textEl) textEl.textContent = 'Duraklat';
+  } else {
+    if (pauseIcon) pauseIcon.style.display = 'none';
+    if (playIcon) playIcon.style.display = 'block';
+    if (textEl) textEl.textContent = 'Oynat';
+  }
+}
+
+function startFlowTimer() {
+  stopFlowTimer();
+  if (!flowState.isPlaying) return;
+
+  const progressBar = document.getElementById('flow-progress-bar');
+  const startTime = Date.now();
+  const duration = flowState.stepDuration;
+
+  flowState.progressInterval = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const pct = Math.min(100, (elapsed / duration) * 100);
+    if (progressBar) progressBar.style.width = pct + '%';
+
+    if (elapsed >= duration) {
+      clearInterval(flowState.progressInterval);
+      flowState.progressInterval = null;
+      nextFlowStep();
+    }
+  }, 40);
+}
+
+function stopFlowTimer() {
+  if (flowState.progressInterval) {
+    clearInterval(flowState.progressInterval);
+    flowState.progressInterval = null;
+  }
+  const progressBar = document.getElementById('flow-progress-bar');
+  if (progressBar) progressBar.style.width = '0%';
+}
+
+function nextFlowStep() {
+  if (flowState.currentIndex < flowState.items.length - 1) {
+    flowState.currentIndex++;
+    renderFlowStep();
+    if (flowState.isPlaying) startFlowTimer();
+  } else {
+    flowState.currentIndex = 0;
+    renderFlowStep();
+    if (flowState.isPlaying) {
+      showToast('Cümle akışı tamamlandı (başa sarıldı).');
+      startFlowTimer();
+    }
+  }
+}
+
+function prevFlowStep() {
+  if (flowState.currentIndex > 0) {
+    flowState.currentIndex--;
+    renderFlowStep();
+    if (flowState.isPlaying) startFlowTimer();
+  }
+}
+
+function jumpToFlowStep(idx) {
+  if (idx >= 0 && idx < flowState.items.length) {
+    flowState.currentIndex = idx;
+    renderFlowStep();
+    if (flowState.isPlaying) startFlowTimer();
+  }
+}
+
+function toggleFlowPlayPause() {
+  flowState.isPlaying = !flowState.isPlaying;
+  updateFlowPlayPauseButton();
+  if (flowState.isPlaying) {
+    startFlowTimer();
+  } else {
+    stopFlowTimer();
   }
 }
 
@@ -1914,6 +2202,21 @@ function initModals() {
     } else {
       openEditSentenceModal(item);
     }
+  });
+
+  // Cümle Akış Oynatıcı (Flow Player) Dinleyicileri
+  const closeFlowModalBtn = document.getElementById('close-flow-modal');
+  const btnFlowPrev = document.getElementById('btn-flow-prev');
+  const btnFlowNext = document.getElementById('btn-flow-next');
+  const btnFlowPlayPause = document.getElementById('btn-flow-play-pause');
+
+  closeFlowModalBtn?.addEventListener('click', closeSentenceFlowModal);
+  btnFlowPrev?.addEventListener('click', prevFlowStep);
+  btnFlowNext?.addEventListener('click', nextFlowStep);
+  btnFlowPlayPause?.addEventListener('click', toggleFlowPlayPause);
+
+  document.getElementById('sentence-flow-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'sentence-flow-modal') closeSentenceFlowModal();
   });
 }
 
