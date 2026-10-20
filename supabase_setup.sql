@@ -45,34 +45,35 @@ DROP POLICY IF EXISTS "Categories Okuma" ON public.categories;
 CREATE POLICY "Categories Okuma" ON public.categories
     FOR SELECT USING (true);
 
+-- Categories: Herkes okuyabilir, ekleyebilir, güncelleyebilir ve silebilir
 DROP POLICY IF EXISTS "Categories Ekleme" ON public.categories;
 CREATE POLICY "Categories Ekleme" ON public.categories
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+    FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Categories Güncelleme" ON public.categories;
 CREATE POLICY "Categories Güncelleme" ON public.categories
-    FOR UPDATE USING (auth.role() = 'authenticated');
+    FOR UPDATE USING (true);
 
 DROP POLICY IF EXISTS "Categories Silme" ON public.categories;
 CREATE POLICY "Categories Silme" ON public.categories
-    FOR DELETE USING (auth.role() = 'authenticated');
+    FOR DELETE USING (true);
 
--- Words: Herkes okuyabilir, üyeler ekleyip güncelleyip silebilir
+-- Words: Herkes okuyabilir, ekleyebilir, güncelleyebilir ve silebilir
 DROP POLICY IF EXISTS "Words Okuma" ON public.words;
 CREATE POLICY "Words Okuma" ON public.words
     FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Words Ekleme" ON public.words;
 CREATE POLICY "Words Ekleme" ON public.words
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+    FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Words Güncelleme" ON public.words;
 CREATE POLICY "Words Güncelleme" ON public.words
-    FOR UPDATE USING (auth.role() = 'authenticated');
+    FOR UPDATE USING (true);
 
 DROP POLICY IF EXISTS "Words Silme" ON public.words;
 CREATE POLICY "Words Silme" ON public.words
-    FOR DELETE USING (auth.role() = 'authenticated');
+    FOR DELETE USING (true);
 
 -- User Word Progress: Her kullanıcı sadece kendi ilerlemesini görebilir ve güncelleyebilir
 DROP POLICY IF EXISTS "Progress Okuma" ON public.user_word_progress;
