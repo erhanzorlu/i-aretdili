@@ -38,6 +38,93 @@
   --shadow-sheet: 0 -4px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* ==================== KARANLIK MOD (DARK THEME) ==================== */
+[data-theme="dark"] {
+  --bg-app: #090d16;
+  --bg-surface: #111827;
+  --bg-subtle: #1e293b;
+  --bg-hover: #29354d;
+  
+  --border-color: #1f293d;
+  --border-strong: #334155;
+  
+  --text-main: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --primary: #3b82f6; /* Modern elektrik mavisi */
+  --primary-hover: #2563eb;
+  
+  --badge-warning-bg: #451a03;
+  --badge-warning-text: #fde68a;
+  --badge-danger-bg: #450a0a;
+  --badge-danger-text: #fca5a5;
+  --badge-success-bg: #052e16;
+  --badge-success-text: #86efac;
+  
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+  --shadow-sheet: 0 -4px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* Dark Mode Bileşen İyileştirmeleri */
+[data-theme="dark"] .chip-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .gif-cat-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .btn-flow-play-pause {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .btn-action.next {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .gif-blur-card {
+  background: #151e32;
+  border-color: #27354f;
+}
+
+[data-theme="dark"] .gif-blur-card:hover {
+  background: #1b2640;
+  border-color: #3b82f6;
+}
+
+[data-theme="dark"] .gif-spoiler-banner {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .btn-google-auth {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .btn-google-auth:hover {
+  background: #27354f;
+}
+
+[data-theme="dark"] .code-box-wrapper textarea {
+  background: #090d16;
+  color: #93c5fd;
+  border-color: #1f293d;
+}
+
+/* Yumuşak tema geçişi */
+body, .mobile-container, .app-header, .word-card, .tab-btn, .modal-card, .bottom-sheet-content, .flashcard, .gif-slide-settings-box, .gif-slide-viewer, .stat-pill, .chip-btn {
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.18s ease, box-shadow 0.22s ease;
+}
+
 /* Reset */
 * {
   box-sizing: border-box;
@@ -1439,11 +1526,11 @@ body {
   border-radius: var(--radius-sm);
 }
 
-/* ==================== YÜZEN BUTON (+) ==================== */
+/* ==================== SABİT YÜZEN BUTON (+) ==================== */
 .floating-add-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
   width: 52px;
   height: 52px;
   border-radius: var(--radius-full);
@@ -1453,15 +1540,39 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  z-index: 30;
-  transition: transform 0.15s ease, background 0.15s ease;
+  z-index: 95;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease, box-shadow 0.2s ease;
+}
+
+@media (min-width: 520px) {
+  .floating-add-btn {
+    right: calc(50% - 240px + 16px);
+    bottom: 28px;
+  }
 }
 
 .floating-add-btn:hover {
   background: var(--primary-hover);
-  transform: scale(1.05);
+  transform: scale(1.08) translateY(-2px);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+}
+
+.floating-add-btn:active {
+  transform: scale(0.95);
+}
+
+.header-action-btn.primary-add {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.header-action-btn.primary-add:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: scale(1.06);
 }
 
 /* ==================== UYGULAMA İÇİ VİDEO MODALI ==================== */

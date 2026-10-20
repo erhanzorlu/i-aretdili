@@ -411,9 +411,21 @@ function populateCategorySelects() {
   const wordCatSelect = document.getElementById('word-category');
   const sentenceCatSelect = document.getElementById('sentence-category');
 
+  const preferredCat = (state.activeCategory && state.activeCategory !== 'all')
+    ? state.activeCategory
+    : (localStorage.getItem('tid_last_category') || '');
+
   const optionsHtml = state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
-  if (wordCatSelect) wordCatSelect.innerHTML = optionsHtml;
+  if (wordCatSelect) {
+    const prevVal = wordCatSelect.value;
+    wordCatSelect.innerHTML = optionsHtml;
+    if (prevVal && state.categories.some(c => c.id === prevVal)) {
+      wordCatSelect.value = prevVal;
+    } else if (preferredCat && state.categories.some(c => c.id === preferredCat)) {
+      wordCatSelect.value = preferredCat;
+    }
+  }
   if (sentenceCatSelect) sentenceCatSelect.innerHTML = optionsHtml;
 }
 
@@ -1890,8 +1902,24 @@ function initModals() {
     formWord?.reset();
     formSentence?.reset();
     formCat?.reset();
+
+    // Akıllı Kategori Seçimi: Aktif kategori veya en son kullanılan kategori
+    const preferredCat = (state.activeCategory && state.activeCategory !== 'all')
+      ? state.activeCategory
+      : (localStorage.getItem('tid_last_category') || '');
+
+    const wordCatSelect = document.getElementById('word-category');
+    if (wordCatSelect && preferredCat && state.categories.some(c => c.id === preferredCat)) {
+      wordCatSelect.value = preferredCat;
+    }
+
     tabWordBtn?.click();
     if (addModal) addModal.classList.add('active');
+  });
+
+  // Üst Başlıktaki Hızlı Ekle Butonu
+  document.getElementById('btn-header-add')?.addEventListener('click', () => {
+    btnFabAdd?.click();
   });
 
   const hideAddModal = () => {
@@ -2018,11 +2046,22 @@ function initModals() {
       }
     }
 
+    if (catInput?.value) {
+      localStorage.setItem('tid_last_category', catInput.value);
+    }
+
     saveState();
     renderFilterChips();
     renderWordsList();
     loadRandomFlashcard();
     hideAddModal();
+  });
+
+  // Kategori seçimi değiştiğinde son seçilen olarak kaydet
+  document.getElementById('word-category')?.addEventListener('change', (e) => {
+    if (e.target.value) {
+      localStorage.setItem('tid_last_category', e.target.value);
+    }
   });
 
   // Cümle Kaydet / Güncelle
@@ -2902,7 +2941,49 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+// ==========================================================================
+// KARANLIK / AYDINLIK MOD (THEME TOGGLE)
+// ==========================================================================
+function initThemeToggle() {
+  const themeToggleBtn = document.getElementById('btn-theme-toggle');
+  const iconSun = document.getElementById('icon-theme-sun');
+  const iconMoon = document.getElementById('icon-theme-moon');
+
+  function updateThemeUI(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('tid_theme_v1', theme);
+
+    if (iconSun && iconMoon) {
+      if (theme === 'dark') {
+        iconSun.style.display = 'block';
+        iconMoon.style.display = 'none';
+        themeToggleBtn?.setAttribute('title', 'Aydınlık Moda Geç');
+      } else {
+        iconSun.style.display = 'none';
+        iconMoon.style.display = 'block';
+        themeToggleBtn?.setAttribute('title', 'Karanlık Moda Geç');
+      }
+    }
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#111827' : '#ffffff');
+    }
+  }
+
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  updateThemeUI(currentTheme);
+
+  themeToggleBtn?.addEventListener('click', () => {
+    const active = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const nextTheme = active === 'dark' ? 'light' : 'dark';
+    updateThemeUI(nextTheme);
+    showToast(nextTheme === 'dark' ? '🌙 Karanlık mod aktif' : '☀️ Aydınlık mod aktif', 1800);
+  });
+}
+
 async function startApp() {
+  initThemeToggle();
   initNavigationTabs();
   initSearchAndFilters();
   initModals();
