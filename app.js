@@ -208,25 +208,29 @@ async function loadDataFromSupabaseOrLocal() {
         !dbCatIds.has(lc.id) && !dbCatNames.has(lc.name.toLowerCase().trim())
       );
 
-      // Kullanıcı oturum açtıysa ve bilgisayarda buluta gitmemiş kategori varsa otomatik buluta yükle!
-      if (state.currentUser && unsyncedCats.length > 0) {
+      // Bilgisayarda buluta henüz gitmemiş yerel kategoriler varsa otomatik buluta yükle!
+      if (unsyncedCats.length > 0) {
+        let syncedCount = 0;
         for (const cat of unsyncedCats) {
           try {
-            await supabase.from('categories').insert([{
+            const { error: insErr } = await supabase.from('categories').insert([{
               id: cat.id.startsWith('cat-') ? cat.id : ('cat-u-' + Date.now() + Math.random().toString(36).substr(2, 4)),
               name: cat.name,
               color: cat.color || '#2563eb',
-              user_id: state.currentUser.id
+              user_id: state.currentUser?.id || null
             }]);
+            if (!insErr) syncedCount++;
           } catch (e) {
             console.warn('Otomatik kategori senkronizasyonu:', e);
           }
         }
-        // En güncel veriyi tekrar çek
-        const { data: updatedCats } = await supabase.from('categories').select('*').order('name');
-        if (updatedCats && updatedCats.length > 0) {
-          dbCategories.length = 0;
-          dbCategories.push(...updatedCats);
+        if (syncedCount > 0) {
+          // En güncel veriyi tekrar çek
+          const { data: updatedCats } = await supabase.from('categories').select('*').order('name');
+          if (updatedCats && updatedCats.length > 0) {
+            dbCategories.length = 0;
+            dbCategories.push(...updatedCats);
+          }
         }
       }
 
@@ -1446,17 +1450,14 @@ function saveCategoryEdit(catId) {
 
   const cat = state.categories.find(c => c.id === catId);
   if (cat) {
-    if (!state.currentUser) {
-      editingCategoryId = null;
-      renderManageCategoriesList();
-      openAuthModal('login', 'Kategorileri düzenlemek için lütfen ücretsiz üye olun veya giriş yapın.');
-      return;
-    }
-
     cat.name = newName;
     saveState();
     try {
-      supabase.from('categories').update({ name: newName }).eq('id', catId);
+      supabase.from('categories').update({ name: newName }).eq('id', catId).then(({ error }) => {
+        if (error && error.code === '42501') {
+          showToast('⚠️ Yerel olarak güncellendi (Supabase RLS kuralı bulut güncellemesine izin vermedi).', 4000);
+        }
+      });
     } catch (e) {}
     editingCategoryId = null;
     renderFilterChips();
@@ -1544,10 +1545,6 @@ function renderManageCategoriesList() {
       const cat = state.categories.find(c => c.id === id);
       if (!cat) return;
 
-      if (!state.currentUser) {
-        openAuthModal('login', 'Kategorileri düzenlemek için lütfen ücretsiz üye olun veya giriş yapın.');
-        return;
-      }
       editingCategoryId = id;
       renderManageCategoriesList();
     });
@@ -1575,11 +1572,6 @@ function renderManageCategoriesList() {
       const id = btn.getAttribute('data-id');
       const cat = state.categories.find(c => c.id === id);
       if (!cat) return;
-
-      if (!state.currentUser) {
-        openAuthModal('login', 'Kategorileri silmek için lütfen ücretsiz üye olun veya giriş yapın.');
-        return;
-      }
 
       const wordCount = state.words.filter(w => w.category === id).length;
       const note = wordCount > 0 
@@ -2045,13 +2037,7 @@ function initModals() {
         }
       }
     } else {
-      // Yeni Kelime Ekleme (Giriş yapılmış olmalı)
-      if (!state.currentUser) {
-        hideAddModal();
-        openAuthModal('login', 'Özel kelimelerinizi bulutta saklamak ve eklemek için lütfen ücretsiz üye olun veya giriş yapın.');
-        return;
-      }
-
+      // Yeni Kelime Ekleme
       const newId = 'w-u-' + Date.now();
       const newWord = {
         id: newId,
@@ -2060,23 +2046,32 @@ function initModals() {
         week: 1,
         ytUrl: ytInput.value.trim(),
         notes: notesInput.value.trim(),
-        userId: state.currentUser.id,
+        userId: state.currentUser?.id || null,
         clickCount: 0,
         status: 'learning'
       };
       state.words.unshift(newWord);
 
       try {
-        await supabase.from('words').insert([{
+        const { error } = await supabase.from('words').insert([{
           id: newId,
           word: newWord.word,
           category: newWord.category,
           week: newWord.week,
           yt_url: newWord.ytUrl,
           notes: newWord.notes,
-          user_id: state.currentUser.id
+          user_id: state.currentUser?.id || null
         }]);
-        showToast('Kelime buluta başarıyla kaydedildi!');
+        if (error) {
+          console.warn('Kelime Supabase hatası:', error);
+          if (error.code === '42501') {
+            showToast('⚠️ Kelime cihaza kaydedildi. Bulut eşitlemesi için Supabase RLS kuralı açılmalıdır.', 5000);
+          } else {
+            showToast('Kelime yerel hafızaya kaydedildi.');
+          }
+        } else {
+          showToast('✓ Kelime buluta kaydedildi ve tüm cihazlarla eşitlendi!');
+        }
       } catch (err) {
         showToast('Kelime eklendi, bulut senkronizasyonunda sorun oluştu.');
       }
@@ -2150,12 +2145,6 @@ function initModals() {
     const name = catNameInput.value.trim();
     if (!name) return;
 
-    if (!state.currentUser) {
-      hideAddModal();
-      openAuthModal('login', 'Özel kategorilerinizin telefon ve diğer tüm cihazlarınızda görünmesi için lütfen giriş yapın.');
-      return;
-    }
-
     if (state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
       showToast('Bu isimde bir kategori zaten var!');
       return;
@@ -2169,7 +2158,7 @@ function initModals() {
       id: id,
       name: name,
       color: randomColor,
-      userId: state.currentUser.id
+      userId: state.currentUser?.id || null
     };
 
     state.categories.push(newCat);
@@ -2179,10 +2168,18 @@ function initModals() {
         id: id,
         name: name,
         color: randomColor,
-        user_id: state.currentUser.id
+        user_id: state.currentUser?.id || null
       }]);
-      if (error) throw error;
-      showToast('Kategori buluta kaydedildi ve tüm cihazlarla eşitlendi!');
+      if (error) {
+        console.warn('Kategori bulut kayıt hatası:', error);
+        if (error.code === '42501') {
+          showToast('⚠️ Kategori cihaza eklendi. Bulut eşitlemesi için Supabase RLS kuralı açılmalıdır.', 5000);
+        } else {
+          showToast('Kategori eklendi, bulut senkronizasyonunda sorun oluştu.');
+        }
+      } else {
+        showToast('✓ Kategori buluta kaydedildi ve tüm cihazlarla eşitlendi!');
+      }
     } catch (err) {
       console.warn('Kategori bulut kayıt hatası:', err);
       showToast('Kategori eklendi, bulut senkronizasyonunda sorun oluştu.');
