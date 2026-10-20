@@ -305,6 +305,10 @@ async function loadDataFromSupabaseOrLocal() {
   renderSentencesList();
   renderTopForgottenList();
   loadRandomFlashcard();
+  renderGifCategoryChips();
+  if (state.practiceMode === 'gif-slide') {
+    buildGifSlidePool(false);
+  }
 }
 
 // İlerlemeyi Buluta veya Misafir Hafızasına Kaydet
@@ -2238,8 +2242,14 @@ function initNavigationTabs() {
 
       if (targetTab === 'practice') {
         populatePracticeFilters();
-        loadRandomFlashcard();
+        if (state.practiceMode === 'word') {
+          loadRandomFlashcard();
+        } else if (state.practiceMode === 'gif-slide') {
+          initOrResumeGifSlide();
+        }
         renderTopForgottenList();
+      } else {
+        pauseGifSlide();
       }
     });
   });
@@ -2301,6 +2311,79 @@ function initSearchAndFilters() {
     renderFilterChips();
   });
 
+  // Kategori Genişlet / Daralt (Çok Satırlı Görünüm)
+  const btnToggleCatWrap = document.getElementById('btn-toggle-cat-wrap');
+  const catChipsList = document.getElementById('category-chips-list');
+  const btnScrollLeft = document.getElementById('btn-scroll-cat-left');
+  const btnScrollRight = document.getElementById('btn-scroll-cat-right');
+
+  btnToggleCatWrap?.addEventListener('click', () => {
+    const isWrapped = catChipsList?.classList.toggle('is-wrapped');
+    btnToggleCatWrap.classList.toggle('active', isWrapped);
+    btnToggleCatWrap.textContent = isWrapped ? '⊟ Daralt' : '⊞ Genişlet';
+    if (btnScrollLeft && btnScrollRight) {
+      btnScrollLeft.style.display = isWrapped ? 'none' : 'flex';
+      btnScrollRight.style.display = isWrapped ? 'none' : 'flex';
+    }
+  });
+
+  // PC İçin Ok Butonları ile Kaydırma (◀ / ▶)
+  btnScrollLeft?.addEventListener('click', () => {
+    catChipsList?.scrollBy({ left: -220, behavior: 'smooth' });
+  });
+
+  btnScrollRight?.addEventListener('click', () => {
+    catChipsList?.scrollBy({ left: 220, behavior: 'smooth' });
+  });
+
+  // PC Fare Tekerleği ile Yatay Kaydırma (Mouse Wheel Horizontal Scroll)
+  catChipsList?.addEventListener('wheel', (e) => {
+    if (!catChipsList.classList.contains('is-wrapped') && e.deltaY !== 0) {
+      e.preventDefault();
+      catChipsList.scrollLeft += e.deltaY * 1.2;
+    }
+  }, { passive: false });
+
+  // PC Fare ile Tutup Sürükleme (Drag to Scroll)
+  if (catChipsList) {
+    let isDown = false;
+    let startX = 0;
+    let scrollStart = 0;
+    let hasMoved = false;
+
+    catChipsList.addEventListener('mousedown', (e) => {
+      if (catChipsList.classList.contains('is-wrapped')) return;
+      isDown = true;
+      hasMoved = false;
+      catChipsList.classList.add('grabbing');
+      startX = e.pageX - catChipsList.offsetLeft;
+      scrollStart = catChipsList.scrollLeft;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDown) {
+        isDown = false;
+        catChipsList.classList.remove('grabbing');
+      }
+    });
+
+    catChipsList.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - catChipsList.offsetLeft;
+      const walk = (x - startX);
+      if (Math.abs(walk) > 4) hasMoved = true;
+      catChipsList.scrollLeft = scrollStart - walk;
+    });
+
+    catChipsList.addEventListener('click', (e) => {
+      if (hasMoved) {
+        e.stopPropagation();
+        hasMoved = false;
+      }
+    }, true);
+  }
+
   document.querySelectorAll('.pill-toggle').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.pill-toggle').forEach(p => p.classList.remove('active'));
@@ -2342,34 +2425,42 @@ function initSearchAndFilters() {
     loadRandomFlashcard();
   });
 
-  // Pratik Modu Geçişleri (Tek Kelime vs Akıcı Cümle)
+  // Pratik Modu Geçişleri (Tek Kelime vs Akıcı Cümle vs GIF Slayt)
   const btnModeWord = document.getElementById('btn-mode-word');
   const btnModeSentence = document.getElementById('btn-mode-sentence');
+  const btnModeGifSlide = document.getElementById('btn-mode-gif-slide');
   const wordContainer = document.getElementById('practice-word-container');
   const sentenceContainer = document.getElementById('practice-sentence-generator-container');
+  const gifContainer = document.getElementById('practice-gif-slide-container');
 
   const setPracticeMode = (mode) => {
     state.practiceMode = mode;
+    btnModeWord?.classList.toggle('active', mode === 'word');
+    btnModeSentence?.classList.toggle('active', mode === 'sentence-generator');
+    btnModeGifSlide?.classList.toggle('active', mode === 'gif-slide');
+
+    if (wordContainer) wordContainer.style.display = (mode === 'word') ? 'block' : 'none';
+    if (sentenceContainer) sentenceContainer.style.display = (mode === 'sentence-generator') ? 'block' : 'none';
+    if (gifContainer) gifContainer.style.display = (mode === 'gif-slide') ? 'block' : 'none';
+
     if (mode === 'word') {
-      btnModeWord?.classList.add('active');
-      btnModeSentence?.classList.remove('active');
-      if (wordContainer) wordContainer.style.display = 'block';
-      if (sentenceContainer) sentenceContainer.style.display = 'none';
+      pauseGifSlide();
       loadRandomFlashcard();
-    } else {
-      btnModeSentence?.classList.add('active');
-      btnModeWord?.classList.remove('active');
-      if (wordContainer) wordContainer.style.display = 'none';
-      if (sentenceContainer) sentenceContainer.style.display = 'block';
+    } else if (mode === 'sentence-generator') {
+      pauseGifSlide();
       populatePracticeFilters();
       if (!state.currentGeneratedSentence || state.currentGeneratedSentence.length === 0) {
         generateRandomSentence();
       }
+    } else if (mode === 'gif-slide') {
+      initOrResumeGifSlide();
     }
   };
 
   btnModeWord?.addEventListener('click', () => setPracticeMode('word'));
   btnModeSentence?.addEventListener('click', () => setPracticeMode('sentence-generator'));
+  btnModeGifSlide?.addEventListener('click', () => setPracticeMode('gif-slide'));
+  initGifSlideModeEvents();
 
   // Cümleler sekmesinden doğrudan geçiş butonu
   document.getElementById('btn-goto-sentence-gen')?.addEventListener('click', () => {
@@ -2405,6 +2496,399 @@ function initSearchAndFilters() {
       btnGenDone.textContent = '✓ Akıcı İşaretledim';
       generateRandomSentence();
     }, 450);
+  });
+}
+
+// ==========================================================================
+// GIF SLAYT & TAHMİN MODU MANTIĞI
+// ==========================================================================
+
+const gifSlideState = {
+  activeCategories: ['all'],
+  durationSec: 6,
+  revealBeforeSec: 2,
+  isShuffle: true,
+  isPlaying: true,
+  currentIndex: 0,
+  pool: [],
+  intervalId: null,
+  elapsedMs: 0,
+  isRevealed: false
+};
+
+function getWordGif(word) {
+  if (!word) return null;
+  const url = (word.gifUrl || word.ytUrl || word.mediaUrl || '').trim();
+  if (!url) return null;
+  const isImageOrGif = url.match(/\.(gif|png|jpe?g|webp)($|\?)/i) || 
+                       url.includes('isaretce.com') ||
+                       url.includes('giphy.com') ||
+                       url.includes('tenor.com') ||
+                       url.toLowerCase().includes('.gif');
+  if (isImageOrGif) return url;
+  const isYoutube = url.includes('youtube.com') || url.includes('youtu.be');
+  if (!isYoutube && url.startsWith('http')) return url;
+  return null;
+}
+
+function renderGifCategoryChips() {
+  const container = document.getElementById('gif-category-chips');
+  if (!container) return;
+
+  const wordsWithGif = state.words.filter(w => !!getWordGif(w));
+  const totalGifs = wordsWithGif.length;
+
+  const isAllSelected = gifSlideState.activeCategories.includes('all');
+  
+  let html = `
+    <button type="button" class="gif-cat-chip ${isAllSelected ? 'active' : ''}" data-cat-id="all">
+      🎲 Tümü <span class="chip-count">${totalGifs}</span>
+    </button>
+  `;
+
+  state.categories.forEach(cat => {
+    const count = wordsWithGif.filter(w => w.category === cat.id).length;
+    const isSelected = !isAllSelected && gifSlideState.activeCategories.includes(cat.id);
+    html += `
+      <button type="button" class="gif-cat-chip ${isSelected ? 'active' : ''}" data-cat-id="${cat.id}">
+        ${escapeHtml(cat.name)} <span class="chip-count">${count}</span>
+      </button>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.gif-cat-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const catId = chip.getAttribute('data-cat-id');
+      handleGifCategoryToggle(catId);
+    });
+  });
+}
+
+function handleGifCategoryToggle(catId) {
+  if (catId === 'all') {
+    gifSlideState.activeCategories = ['all'];
+  } else {
+    let cats = gifSlideState.activeCategories.filter(c => c !== 'all');
+    if (cats.includes(catId)) {
+      cats = cats.filter(c => c !== catId);
+    } else {
+      cats.push(catId);
+    }
+    if (cats.length === 0) {
+      cats = ['all'];
+    }
+    gifSlideState.activeCategories = cats;
+  }
+  renderGifCategoryChips();
+  buildGifSlidePool(true);
+}
+
+function buildGifSlidePool(resetIndex = false) {
+  const wordsWithGif = state.words.filter(w => !!getWordGif(w));
+  
+  let filtered = [];
+  if (gifSlideState.activeCategories.includes('all')) {
+    filtered = [...wordsWithGif];
+  } else {
+    const activeSet = new Set(gifSlideState.activeCategories);
+    filtered = wordsWithGif.filter(w => activeSet.has(w.category));
+  }
+
+  if (gifSlideState.isShuffle) {
+    for (let i = filtered.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+    }
+  }
+
+  gifSlideState.pool = filtered;
+  if (resetIndex || gifSlideState.currentIndex >= filtered.length) {
+    gifSlideState.currentIndex = 0;
+  }
+
+  const poolCountBadge = document.getElementById('gif-slide-pool-count');
+  if (poolCountBadge) {
+    poolCountBadge.textContent = `GIF Havuzu: ${filtered.length}`;
+  }
+
+  const emptyEl = document.getElementById('gif-slide-empty');
+  const contentEl = document.getElementById('gif-slide-content');
+
+  if (filtered.length === 0) {
+    stopGifSlideTimer();
+    if (emptyEl) emptyEl.style.display = 'block';
+    if (contentEl) contentEl.style.display = 'none';
+  } else {
+    if (emptyEl) emptyEl.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'block';
+    loadCurrentGifSlide();
+  }
+}
+
+function loadCurrentGifSlide() {
+  if (!gifSlideState.pool || gifSlideState.pool.length === 0) return;
+  const current = gifSlideState.pool[gifSlideState.currentIndex];
+  if (!current) return;
+
+  const counterEl = document.getElementById('gif-card-counter');
+  const catEl = document.getElementById('gif-card-category');
+  if (counterEl) counterEl.textContent = `${gifSlideState.currentIndex + 1} / ${gifSlideState.pool.length}`;
+
+  if (catEl) {
+    const cat = state.categories.find(c => c.id === current.category);
+    catEl.textContent = cat ? cat.name : 'Genel';
+    catEl.style.backgroundColor = cat?.color ? `${cat.color}20` : 'var(--bg-subtle)';
+    catEl.style.color = cat?.color || 'var(--text-secondary)';
+  }
+
+  const imgEl = document.getElementById('gif-slide-img');
+  const fallbackEl = document.getElementById('gif-screen-fallback');
+  const gifUrl = getWordGif(current);
+
+  if (imgEl && gifUrl) {
+    imgEl.style.display = 'block';
+    if (fallbackEl) fallbackEl.style.display = 'none';
+    imgEl.src = gifUrl;
+    imgEl.onerror = () => {
+      imgEl.style.display = 'none';
+      if (fallbackEl) fallbackEl.style.display = 'block';
+    };
+  }
+
+  const wordEl = document.getElementById('gif-target-word');
+  const blurCard = document.getElementById('gif-blur-card');
+  const spoilerText = document.getElementById('gif-spoiler-text');
+  const notesEl = document.getElementById('gif-word-notes');
+  const btnReveal = document.getElementById('btn-gif-reveal-toggle');
+
+  if (wordEl) {
+    wordEl.textContent = current.word;
+    wordEl.classList.remove('is-revealed');
+    wordEl.classList.add('is-blurred');
+  }
+
+  if (blurCard) {
+    blurCard.classList.remove('revealed');
+  }
+
+  if (spoilerText) {
+    spoilerText.textContent = 'Cevabı görmek için dokun (Son 2 sn kala açılır)';
+  }
+
+  if (btnReveal) {
+    btnReveal.textContent = '👁️ Cevabı Aç';
+  }
+
+  if (notesEl) {
+    notesEl.textContent = current.notes ? `💡 İpucu: ${current.notes}` : '';
+  }
+
+  gifSlideState.isRevealed = false;
+  gifSlideState.elapsedMs = 0;
+  updateGifProgressBar(0);
+
+  if (gifSlideState.isPlaying) {
+    startGifSlideTimer();
+  }
+}
+
+function revealGifAnswer(isAuto = false) {
+  const wordEl = document.getElementById('gif-target-word');
+  const blurCard = document.getElementById('gif-blur-card');
+  const spoilerText = document.getElementById('gif-spoiler-text');
+  const btnReveal = document.getElementById('btn-gif-reveal-toggle');
+
+  if (wordEl) {
+    wordEl.classList.remove('is-blurred');
+    wordEl.classList.add('is-revealed');
+  }
+
+  if (blurCard) {
+    blurCard.classList.add('revealed');
+  }
+
+  if (spoilerText) {
+    spoilerText.textContent = isAuto ? '✓ Süre Sonu: Cevap Açıldı' : '✓ Cevap Açıldı';
+  }
+
+  if (btnReveal) {
+    btnReveal.textContent = '👁️ Gizle';
+  }
+
+  gifSlideState.isRevealed = true;
+}
+
+function hideGifAnswer() {
+  const wordEl = document.getElementById('gif-target-word');
+  const blurCard = document.getElementById('gif-blur-card');
+  const spoilerText = document.getElementById('gif-spoiler-text');
+  const btnReveal = document.getElementById('btn-gif-reveal-toggle');
+
+  if (wordEl) {
+    wordEl.classList.remove('is-revealed');
+    wordEl.classList.add('is-blurred');
+  }
+
+  if (blurCard) {
+    blurCard.classList.remove('revealed');
+  }
+
+  if (spoilerText) {
+    spoilerText.textContent = 'Cevabı görmek için dokun (Son 2 sn kala açılır)';
+  }
+
+  if (btnReveal) {
+    btnReveal.textContent = '👁️ Cevabı Aç';
+  }
+
+  gifSlideState.isRevealed = false;
+}
+
+function toggleGifAnswer() {
+  if (gifSlideState.isRevealed) {
+    hideGifAnswer();
+  } else {
+    revealGifAnswer(false);
+  }
+}
+
+function updateGifProgressBar(pct) {
+  const fill = document.getElementById('gif-progress-fill');
+  if (fill) fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+}
+
+function startGifSlideTimer() {
+  stopGifSlideTimer();
+  const stepMs = 50;
+  const totalMs = gifSlideState.durationSec * 1000;
+  const revealAtMs = Math.max(0, (gifSlideState.durationSec - gifSlideState.revealBeforeSec) * 1000);
+
+  gifSlideState.intervalId = setInterval(() => {
+    gifSlideState.elapsedMs += stepMs;
+    const pct = (gifSlideState.elapsedMs / totalMs) * 100;
+    updateGifProgressBar(pct);
+
+    if (gifSlideState.elapsedMs >= revealAtMs && !gifSlideState.isRevealed) {
+      revealGifAnswer(true);
+    }
+
+    if (gifSlideState.elapsedMs >= totalMs) {
+      nextGifSlide();
+    }
+  }, stepMs);
+}
+
+function stopGifSlideTimer() {
+  if (gifSlideState.intervalId) {
+    clearInterval(gifSlideState.intervalId);
+    gifSlideState.intervalId = null;
+  }
+}
+
+function pauseGifSlide() {
+  stopGifSlideTimer();
+  gifSlideState.isPlaying = false;
+  updateGifPlayPauseUI();
+}
+
+function resumeGifSlide() {
+  gifSlideState.isPlaying = true;
+  updateGifPlayPauseUI();
+  startGifSlideTimer();
+}
+
+function toggleGifSlidePlayPause() {
+  if (gifSlideState.isPlaying) {
+    pauseGifSlide();
+  } else {
+    resumeGifSlide();
+  }
+}
+
+function updateGifPlayPauseUI() {
+  const iconPause = document.getElementById('icon-gif-pause');
+  const iconPlay = document.getElementById('icon-gif-play');
+  const textPlay = document.getElementById('text-gif-play');
+
+  if (gifSlideState.isPlaying) {
+    if (iconPause) iconPause.style.display = 'block';
+    if (iconPlay) iconPlay.style.display = 'none';
+    if (textPlay) textPlay.textContent = 'Durdur';
+  } else {
+    if (iconPause) iconPause.style.display = 'none';
+    if (iconPlay) iconPlay.style.display = 'block';
+    if (textPlay) textPlay.textContent = 'Oynat';
+  }
+}
+
+function nextGifSlide() {
+  if (!gifSlideState.pool || gifSlideState.pool.length === 0) return;
+  gifSlideState.currentIndex = (gifSlideState.currentIndex + 1) % gifSlideState.pool.length;
+  loadCurrentGifSlide();
+}
+
+function prevGifSlide() {
+  if (!gifSlideState.pool || gifSlideState.pool.length === 0) return;
+  gifSlideState.currentIndex = (gifSlideState.currentIndex - 1 + gifSlideState.pool.length) % gifSlideState.pool.length;
+  loadCurrentGifSlide();
+}
+
+function initOrResumeGifSlide() {
+  renderGifCategoryChips();
+  if (!gifSlideState.pool || gifSlideState.pool.length === 0) {
+    buildGifSlidePool(true);
+  } else {
+    loadCurrentGifSlide();
+  }
+}
+
+function initGifSlideModeEvents() {
+  document.getElementById('btn-gif-select-all')?.addEventListener('click', () => {
+    gifSlideState.activeCategories = ['all'];
+    renderGifCategoryChips();
+    buildGifSlidePool(true);
+  });
+
+  document.getElementById('btn-gif-clear-all')?.addEventListener('click', () => {
+    gifSlideState.activeCategories = [];
+    renderGifCategoryChips();
+    buildGifSlidePool(true);
+  });
+
+  document.getElementById('btn-gif-reset-filters')?.addEventListener('click', () => {
+    gifSlideState.activeCategories = ['all'];
+    renderGifCategoryChips();
+    buildGifSlidePool(true);
+  });
+
+  const durSelect = document.getElementById('gif-slide-duration');
+  durSelect?.addEventListener('change', (e) => {
+    gifSlideState.durationSec = parseInt(e.target.value, 10) || 6;
+    gifSlideState.elapsedMs = 0;
+    updateGifProgressBar(0);
+    if (gifSlideState.isPlaying) {
+      startGifSlideTimer();
+    }
+  });
+
+  const shuffleCheck = document.getElementById('gif-slide-shuffle');
+  shuffleCheck?.addEventListener('change', (e) => {
+    gifSlideState.isShuffle = e.target.checked;
+    buildGifSlidePool(true);
+  });
+
+  document.getElementById('btn-gif-slide-play')?.addEventListener('click', toggleGifSlidePlayPause);
+  document.getElementById('gif-blur-card')?.addEventListener('click', toggleGifAnswer);
+  document.getElementById('btn-gif-reveal-toggle')?.addEventListener('click', toggleGifAnswer);
+
+  document.getElementById('btn-gif-next')?.addEventListener('click', () => {
+    nextGifSlide();
+  });
+
+  document.getElementById('btn-gif-prev')?.addEventListener('click', () => {
+    prevGifSlide();
   });
 }
 

@@ -101,6 +101,7 @@
             <div class="scroll-label category-header-row">
               <span class="category-header-title">Kategoriler</span>
               <div class="category-header-actions">
+                <button id="btn-toggle-cat-wrap" type="button" class="cat-header-btn" title="Kategorileri Çok Satırlı Aç / Tek Satır Yap">⊞ Genişlet</button>
                 <button id="btn-toggle-cat-search" type="button" class="cat-header-btn" title="Kategori Ara">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   <span>Ara</span>
@@ -118,8 +119,17 @@
               </div>
             </div>
 
-            <div class="category-chips" id="category-chips-list">
-              <!-- Dinamik doldurulur -->
+            <!-- PC & Mobil Uyumlu Kategori Çipleri (Ok Butonları + Mouse Wheel) -->
+            <div class="category-chips-wrapper">
+              <button type="button" id="btn-scroll-cat-left" class="cat-nav-arrow-btn" title="Sola Kaydır" aria-label="Sola Kaydır">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div class="category-chips" id="category-chips-list">
+                <!-- Dinamik doldurulur -->
+              </div>
+              <button type="button" id="btn-scroll-cat-right" class="cat-nav-arrow-btn" title="Sağa Kaydır" aria-label="Sağa Kaydır">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
             </div>
           </div>
 
@@ -157,13 +167,16 @@
         <!-- ==================== SEKME 3: PRATİK & TEST ==================== -->
         <section id="section-practice" class="tab-content">
 
-          <!-- Pratik Modu Seçici (Tek Kelime vs Akıcı Cümle) -->
+          <!-- Pratik Modu Seçici (Tek Kelime vs Akıcı Cümle vs GIF Slayt) -->
           <div class="practice-mode-nav">
             <button type="button" class="practice-mode-btn active" id="btn-mode-word" data-mode="word">
-              🎴 Tek Kelime Kartı
+              🎴 Tek Kelime
             </button>
             <button type="button" class="practice-mode-btn" id="btn-mode-sentence" data-mode="sentence-generator">
-              🔗 Akıcı Cümle / Akış Üreteci
+              🔗 Akıcı Cümle
+            </button>
+            <button type="button" class="practice-mode-btn" id="btn-mode-gif-slide" data-mode="gif-slide">
+              🎞️ GIF Slayt & Tahmin
             </button>
           </div>
 
@@ -263,6 +276,127 @@
               <button class="btn-action check" id="btn-gen-done">
                 ✓ Akıcı İşaretledim
               </button>
+            </div>
+          </div>
+
+          <!-- MOD 3: GIF SLAYT & TAHMİN MODU -->
+          <div class="practice-card-box" id="practice-gif-slide-container" style="display: none;">
+            <div class="practice-header">
+              <div class="gif-header-top-row">
+                <span class="practice-badge">🎞️ Slayt & Tahmin</span>
+                <span class="practice-pool-badge" id="gif-slide-pool-count">GIF Havuzu: 0</span>
+              </div>
+              <h3>Hareketli GIF Slaytı</h3>
+              <p>Hareketi izle, işaretin adını tahmin et. İster dokunarak aç ister son 2 saniyede kendisi açılsın!</p>
+            </div>
+
+            <!-- Ayarlar ve Çoklu Kategori Filtresi -->
+            <div class="gif-slide-settings-box">
+              <div class="gif-filter-section">
+                <div class="gif-filter-header">
+                  <span class="gif-filter-title">📁 Kategoriler (Çoklu Seçim):</span>
+                  <div class="gif-filter-actions">
+                    <button type="button" id="btn-gif-select-all" class="gif-filter-text-btn">Tümünü Seç</button>
+                    <span class="filter-sep">|</span>
+                    <button type="button" id="btn-gif-clear-all" class="gif-filter-text-btn">Temizle</button>
+                  </div>
+                </div>
+                <div class="gif-category-chips" id="gif-category-chips">
+                  <!-- Dinamik doldurulur -->
+                </div>
+              </div>
+
+              <!-- Hız, Karıştırma ve Oynatma Araç Çubuğu -->
+              <div class="gif-slide-toolbar">
+                <div class="gif-duration-group">
+                  <label for="gif-slide-duration">Süre:</label>
+                  <select id="gif-slide-duration" class="gif-duration-select">
+                    <option value="4">4 sn (Hızlı)</option>
+                    <option value="5">5 sn</option>
+                    <option value="6" selected>6 sn (Önerilen)</option>
+                    <option value="8">8 sn (Rahat)</option>
+                    <option value="10">10 sn (Uzun)</option>
+                  </select>
+                </div>
+
+                <div class="gif-toggle-group">
+                  <label class="gif-checkbox-label" title="Kelimeleri rastgele sırayla getir">
+                    <input type="checkbox" id="gif-slide-shuffle" checked>
+                    <span>🎲 Karışık</span>
+                  </label>
+                </div>
+
+                <button type="button" class="btn-flow-play-pause" id="btn-gif-slide-play" title="Slaytı Oynat / Duraklat">
+                  <svg id="icon-gif-pause" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"/>
+                    <rect x="14" y="4" width="4" height="16"/>
+                  </svg>
+                  <svg id="icon-gif-play" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  <span id="text-gif-play">Duraklat</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Slayt İzleme Kartı -->
+            <div class="gif-slide-viewer" id="gif-slide-viewer">
+              <!-- Boş Durum Ekranı -->
+              <div id="gif-slide-empty" class="gif-slide-empty" style="display: none;">
+                <div class="empty-icon">🎬</div>
+                <h4>GIF Bulunamadı</h4>
+                <p id="gif-empty-message">Seçili kategorilerde henüz GIF eklenmiş kelime yok.</p>
+                <button type="button" class="btn-action primary-gen" id="btn-gif-reset-filters" style="margin-top: 10px;">
+                  Tüm Kategorileri Seç
+                </button>
+              </div>
+
+              <!-- Aktif GIF Oynatıcı Kartı -->
+              <div id="gif-slide-content" class="gif-slide-content">
+                <div class="gif-viewer-top-meta">
+                  <span class="flashcard-category" id="gif-card-category">-</span>
+                  <span class="gif-slide-counter-badge" id="gif-card-counter">1 / 1</span>
+                </div>
+
+                <!-- Süre Çubuğu (Geri sayım dolumu) -->
+                <div class="gif-progress-track">
+                  <div class="gif-progress-fill" id="gif-progress-fill"></div>
+                </div>
+
+                <!-- GIF Ekranı -->
+                <div class="gif-screen-wrapper">
+                  <img id="gif-slide-img" src="" alt="İşaret Dili Hareketi GIF" referrerpolicy="no-referrer">
+                  <div id="gif-screen-fallback" class="gif-screen-fallback" style="display: none;">
+                    <span style="font-size: 32px;">🤟</span>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">GIF yüklenemedi</p>
+                  </div>
+                </div>
+
+                <!-- Bulanık Kelime Kutusu -->
+                <div class="gif-answer-container">
+                  <div class="gif-blur-card" id="gif-blur-card" role="button" tabindex="0" title="Cevabı hemen görmek için tıkla">
+                    <div class="gif-spoiler-banner" id="gif-spoiler-banner">
+                      <span class="spoiler-icon">👁️</span>
+                      <span id="gif-spoiler-text">Cevabı görmek için dokun (Son 2 sn kala açılır)</span>
+                    </div>
+                    <h2 class="gif-target-word is-blurred" id="gif-target-word">-</h2>
+                  </div>
+                  <p class="gif-word-notes" id="gif-word-notes"></p>
+                </div>
+
+                <!-- Navigasyon Butonları -->
+                <div class="gif-slide-footer-nav">
+                  <button type="button" class="btn-action" id="btn-gif-prev" title="Önceki GIF">
+                    ◀ Önceki
+                  </button>
+                  <button type="button" class="btn-action check" id="btn-gif-reveal-toggle">
+                    👁️ Cevabı Aç
+                  </button>
+                  <button type="button" class="btn-action next" id="btn-gif-next" title="Sonraki GIF">
+                    Sonraki ▶
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -421,9 +555,9 @@
             </div>
 
             <div class="form-group">
-              <label for="word-yt">YouTube Linki (Opsiyonel)</label>
-              <input type="url" id="word-yt" placeholder="https://www.youtube.com/watch?v=...">
-              <small class="form-hint">Normal video linki veya shorts linki yapıştırabilirsiniz.</small>
+              <label for="word-yt">YouTube / GIF Linki (Opsiyonel)</label>
+              <input type="url" id="word-yt" placeholder="https://... (.gif, .mp4 veya YouTube linki)">
+              <small class="form-hint">YouTube videosu veya hareketli GIF linki yapıştırabilirsiniz.</small>
             </div>
 
             <div class="form-group">
