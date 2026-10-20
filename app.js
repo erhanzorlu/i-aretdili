@@ -952,6 +952,9 @@ function openVideoBottomSheet(item, type = 'word') {
 }
 
 function closeVideoBottomSheet() {
+  if (mirrorState.activeTarget === 'sheet') {
+    stopMirrorMode();
+  }
   const overlay = document.getElementById('video-bottom-sheet');
   const iframeEl = document.getElementById('video-iframe');
   const imgEl = document.getElementById('media-image');
@@ -2304,6 +2307,9 @@ function initNavigationTabs() {
         renderTopForgottenList();
       } else {
         pauseGifSlide();
+        if (mirrorState.activeTarget === 'gif') {
+          stopMirrorMode();
+        }
       }
     });
   });
@@ -2499,9 +2505,11 @@ function initSearchAndFilters() {
 
     if (mode === 'word') {
       pauseGifSlide();
+      if (mirrorState.activeTarget === 'gif') stopMirrorMode();
       loadRandomFlashcard();
     } else if (mode === 'sentence-generator') {
       pauseGifSlide();
+      if (mirrorState.activeTarget === 'gif') stopMirrorMode();
       populatePracticeFilters();
       if (!state.currentGeneratedSentence || state.currentGeneratedSentence.length === 0) {
         generateRandomSentence();
@@ -2997,11 +3005,141 @@ function initThemeToggle() {
   });
 }
 
+// ==========================================================================
+// CANLI AYNA & PRATİK KAMERASI (LIVE MIRROR MODE)
+// ==========================================================================
+
+const mirrorState = {
+  stream: null,
+  activeTarget: null, // 'sheet' | 'gif' | null
+  isFlipped: true     // true: ayna ters çevirme aktif, false: normal
+};
+
+async function startMirrorMode(target) {
+  // Eğer zaten aynı hedefte açıksa kapat
+  if (mirrorState.stream && mirrorState.activeTarget === target) {
+    stopMirrorMode();
+    return;
+  }
+
+  // Başka bir hedefte açıksa önce onu durdur
+  if (mirrorState.stream) {
+    stopMirrorMode();
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Kamera Desteği Bulunamadı:\n\nTarayıcınız kamera erişimini desteklemiyor veya sayfa güvenli bağlantı (HTTPS) üzerinden çalışmıyor. Mobil Chrome kullanıyorsanız HTTPS adresini kullanınız.');
+    return;
+  }
+
+  const videoEl = document.getElementById(target === 'sheet' ? 'sheet-mirror-video' : 'gif-slide-mirror-video');
+  const boxEl = document.getElementById(target === 'sheet' ? 'sheet-mirror-box' : 'gif-slide-mirror-box');
+  const btnToggle = document.getElementById(target === 'sheet' ? 'btn-sheet-mirror-toggle' : 'btn-gif-mirror-toggle');
+
+  if (!videoEl || !boxEl) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'user', // Android ve mobilde ön selfie kamerası
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      },
+      audio: false
+    });
+
+    mirrorState.stream = stream;
+    mirrorState.activeTarget = target;
+    videoEl.srcObject = stream;
+    
+    // playsinline ve muted garanti
+    videoEl.setAttribute('playsinline', '');
+    videoEl.setAttribute('muted', '');
+    videoEl.muted = true;
+    
+    await videoEl.play().catch(() => {});
+
+    videoEl.classList.toggle('is-unflipped', !mirrorState.isFlipped);
+    boxEl.style.display = 'block';
+    btnToggle?.classList.add('active');
+
+    showToast('🪞 Canlı ayna açıldı! Kendinizi izleyerek pratik yapabilirsiniz.');
+  } catch (err) {
+    console.warn('Kamera açma hatası:', err);
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      alert('Kamera İzni Gerekli:\n\nTarayıcınızın adres çubuğundaki kilit / ayar simgesine dokunup kamera iznini "İzin Ver" yaparak sayfayı yenileyiniz.');
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      alert('Kamera Bulunamadı:\n\nCihazınızda kullanılabilir bir ön kamera bulunamadı.');
+    } else {
+      alert('Kamera açılamadı:\n\n' + (err.message || 'Lütfen kamera izinlerinizi kontrol edin.'));
+    }
+  }
+}
+
+function stopMirrorMode() {
+  if (mirrorState.stream) {
+    try {
+      mirrorState.stream.getTracks().forEach(track => track.stop());
+    } catch (e) {}
+    mirrorState.stream = null;
+  }
+
+  const sheetVideo = document.getElementById('sheet-mirror-video');
+  const sheetBox = document.getElementById('sheet-mirror-box');
+  const btnSheetToggle = document.getElementById('btn-sheet-mirror-toggle');
+
+  const gifVideo = document.getElementById('gif-slide-mirror-video');
+  const gifBox = document.getElementById('gif-slide-mirror-box');
+  const btnGifToggle = document.getElementById('btn-gif-mirror-toggle');
+
+  if (sheetVideo) sheetVideo.srcObject = null;
+  if (sheetBox) sheetBox.style.display = 'none';
+  btnSheetToggle?.classList.remove('active');
+
+  if (gifVideo) gifVideo.srcObject = null;
+  if (gifBox) gifBox.style.display = 'none';
+  btnGifToggle?.classList.remove('active');
+
+  mirrorState.activeTarget = null;
+}
+
+function toggleMirrorFlip() {
+  mirrorState.isFlipped = !mirrorState.isFlipped;
+  const sheetVideo = document.getElementById('sheet-mirror-video');
+  const gifVideo = document.getElementById('gif-slide-mirror-video');
+
+  if (sheetVideo) sheetVideo.classList.toggle('is-unflipped', !mirrorState.isFlipped);
+  if (gifVideo) gifVideo.classList.toggle('is-unflipped', !mirrorState.isFlipped);
+
+  showToast(mirrorState.isFlipped ? '🔄 Ayna modu (Yatay çevrildi)' : '🔄 Düz kamera modu');
+}
+
+function initMirrorMode() {
+  // Video Detay Modalı Ayna Kontrolleri
+  document.getElementById('btn-sheet-mirror-toggle')?.addEventListener('click', () => {
+    startMirrorMode('sheet');
+  });
+  document.getElementById('btn-sheet-mirror-close')?.addEventListener('click', () => {
+    stopMirrorMode();
+  });
+  document.getElementById('btn-sheet-mirror-flip')?.addEventListener('click', toggleMirrorFlip);
+
+  // GIF Slayt Modu Ayna Kontrolleri
+  document.getElementById('btn-gif-mirror-toggle')?.addEventListener('click', () => {
+    startMirrorMode('gif');
+  });
+  document.getElementById('btn-gif-mirror-close')?.addEventListener('click', () => {
+    stopMirrorMode();
+  });
+  document.getElementById('btn-gif-mirror-flip')?.addEventListener('click', toggleMirrorFlip);
+}
+
 async function startApp() {
   initThemeToggle();
   initNavigationTabs();
   initSearchAndFilters();
   initModals();
+  initMirrorMode();
 
   // 1. Önce anında yerel verileri ekrana çiz (0 milisaniye gecikme)
   loadInitialCache();

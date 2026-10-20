@@ -370,6 +370,11 @@
                   </svg>
                   <span id="text-gif-play">Duraklat</span>
                 </button>
+
+                <button type="button" class="btn-mirror-toggle-action" id="btn-gif-mirror-toggle" title="Canlı Ayna Modunu Aç (Ön Kamera)">
+                  <span class="mirror-btn-icon">🪞</span>
+                  <span class="mirror-btn-text">Ayna</span>
+                </button>
               </div>
             </div>
 
@@ -403,6 +408,18 @@
                   <div id="gif-screen-fallback" class="gif-screen-fallback" style="display: none;">
                     <span style="font-size: 32px;">🤟</span>
                     <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">GIF yüklenemedi</p>
+                  </div>
+
+                  <!-- Canlı Ayna (Self-Practice Mirror) -->
+                  <div id="gif-slide-mirror-box" class="live-mirror-box" style="display: none;">
+                    <video id="gif-slide-mirror-video" autoplay playsinline muted></video>
+                    <div class="mirror-overlay-bar">
+                      <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna</span>
+                      <div class="mirror-actions-pill">
+                        <button type="button" class="btn-mirror-ctrl" id="btn-gif-mirror-flip" title="Sağ/Sol Ters Çevir (Aynala)">🔄 Çevir</button>
+                        <button type="button" class="btn-mirror-ctrl danger" id="btn-gif-mirror-close" title="Kamerayı Kapat">✕</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -470,6 +487,18 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen></iframe>
             <img id="media-image" src="" alt="İşaret Dili Görseli/GIF" referrerpolicy="no-referrer">
+
+            <!-- Canlı Ayna (Self-Practice Mirror) -->
+            <div id="sheet-mirror-box" class="live-mirror-box" style="display: none;">
+              <video id="sheet-mirror-video" autoplay playsinline muted></video>
+              <div class="mirror-overlay-bar">
+                <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna</span>
+                <div class="mirror-actions-pill">
+                  <button type="button" class="btn-mirror-ctrl" id="btn-sheet-mirror-flip" title="Sağ/Sol Ters Çevir (Aynala)">🔄 Çevir</button>
+                  <button type="button" class="btn-mirror-ctrl danger" id="btn-sheet-mirror-close" title="Kamerayı Kapat">✕</button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="video-meta-box">
@@ -478,6 +507,10 @@
           </div>
 
           <div class="video-footer-actions">
+            <button type="button" class="btn-sheet-mirror" id="btn-sheet-mirror-toggle" title="Ön Kamerayı Açıp Ellerini İzle">
+              <span class="mirror-btn-icon">🪞</span>
+              <span>Canlı Ayna</span>
+            </button>
             <a id="btn-open-youtube-direct" href="#" target="_blank" rel="noopener noreferrer" class="btn-yt-external">
               YouTube'da Aç
             </a>
