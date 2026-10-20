@@ -402,22 +402,24 @@
                   <div class="gif-progress-fill" id="gif-progress-fill"></div>
                 </div>
 
-                <!-- GIF Ekranı -->
+                <!-- GIF Ekranı (GIF Asla Kapanmaz) -->
                 <div class="gif-screen-wrapper">
                   <img id="gif-slide-img" src="" alt="İşaret Dili Hareketi GIF" referrerpolicy="no-referrer">
                   <div id="gif-screen-fallback" class="gif-screen-fallback" style="display: none;">
                     <span style="font-size: 32px;">🤟</span>
                     <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">GIF yüklenemedi</p>
                   </div>
+                </div>
 
-                  <!-- Canlı Ayna (Self-Practice Mirror) -->
-                  <div id="gif-slide-mirror-box" class="live-mirror-box" style="display: none;">
+                <!-- Canlı Ayna (GIF'in Altında Ayrı Bağımsız Bölme) -->
+                <div id="gif-slide-mirror-box" class="live-mirror-dedicated-box" style="display: none;">
+                  <div class="mirror-video-wrapper">
                     <video id="gif-slide-mirror-video" autoplay playsinline muted></video>
                     <div class="mirror-overlay-bar">
-                      <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna</span>
+                      <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna (Sen)</span>
                       <div class="mirror-actions-pill">
                         <button type="button" class="btn-mirror-ctrl" id="btn-gif-mirror-flip" title="Sağ/Sol Ters Çevir (Aynala)">🔄 Çevir</button>
-                        <button type="button" class="btn-mirror-ctrl danger" id="btn-gif-mirror-close" title="Kamerayı Kapat">✕</button>
+                        <button type="button" class="btn-mirror-ctrl danger" id="btn-gif-mirror-close" title="Kamerayı Kapat">✕ Kapat</button>
                       </div>
                     </div>
                   </div>
@@ -487,15 +489,17 @@
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen></iframe>
             <img id="media-image" src="" alt="İşaret Dili Görseli/GIF" referrerpolicy="no-referrer">
+          </div>
 
-            <!-- Canlı Ayna (Self-Practice Mirror) -->
-            <div id="sheet-mirror-box" class="live-mirror-box" style="display: none;">
+          <!-- Canlı Ayna (Video/GIF'in Altında Ayrı Bağımsız Bölme - GIF Asla Kapanmaz) -->
+          <div id="sheet-mirror-box" class="live-mirror-dedicated-box" style="display: none;">
+            <div class="mirror-video-wrapper">
               <video id="sheet-mirror-video" autoplay playsinline muted></video>
               <div class="mirror-overlay-bar">
-                <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna</span>
+                <span class="live-indicator-pill"><span class="live-dot"></span> Canlı Ayna (Sen)</span>
                 <div class="mirror-actions-pill">
                   <button type="button" class="btn-mirror-ctrl" id="btn-sheet-mirror-flip" title="Sağ/Sol Ters Çevir (Aynala)">🔄 Çevir</button>
-                  <button type="button" class="btn-mirror-ctrl danger" id="btn-sheet-mirror-close" title="Kamerayı Kapat">✕</button>
+                  <button type="button" class="btn-mirror-ctrl danger" id="btn-sheet-mirror-close" title="Kamerayı Kapat">✕ Kapat</button>
                 </div>
               </div>
             </div>

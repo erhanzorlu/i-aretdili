@@ -1597,12 +1597,15 @@ body {
 .bottom-sheet-content {
   width: 100%;
   max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
   background: var(--bg-surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 14px 18px 24px;
   transform: translateY(100%);
   transition: transform 0.25s ease-out;
   box-shadow: var(--shadow-sheet);
+  scrollbar-width: thin;
 }
 
 .bottom-sheet-overlay.active .bottom-sheet-content {
@@ -2777,24 +2780,45 @@ body {
 
 /* ==========================================================================
    CANLI AYNA & PRATİK KAMERASI (LIVE MIRROR MODE)
+   GIF'in Altında Ayrı Bağımsız Bölme - GIF Asla Kapanmaz!
    ========================================================================== */
 
-.live-mirror-box {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 46%;
-  max-width: 220px;
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  z-index: 25;
-  background: #000;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(59, 130, 246, 0.7);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+.live-mirror-dedicated-box {
+  width: 100%;
+  margin-bottom: 14px;
+  animation: mirrorExpandDown 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.live-mirror-box video {
+@keyframes mirrorExpandDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mirror-video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  max-height: 35vh;
+  background: #000;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  border: 2px solid #3b82f6;
+}
+
+@media (max-width: 480px) {
+  .mirror-video-wrapper {
+    height: 195px;
+  }
+}
+
+.mirror-video-wrapper video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2803,15 +2827,15 @@ body {
   transition: transform 0.2s ease;
 }
 
-.live-mirror-box video.is-unflipped {
+.mirror-video-wrapper video.is-unflipped {
   transform: scaleX(1);
 }
 
 .mirror-overlay-bar {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
+  top: 8px;
+  left: 8px;
+  right: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2820,24 +2844,24 @@ body {
 }
 
 .live-indicator-pill {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 7px;
+  padding: 4px 9px;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   letter-spacing: 0.2px;
 }
 
 .live-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #ef4444;
   box-shadow: 0 0 8px #ef4444;
@@ -2858,19 +2882,19 @@ body {
 .mirror-actions-pill {
   pointer-events: auto;
   display: flex;
-  gap: 4px;
+  gap: 5px;
 }
 
 .btn-mirror-ctrl {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-full);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 4px 10px;
   cursor: pointer;
   transition: all 0.15s ease;
   line-height: 1.3;
@@ -2879,6 +2903,11 @@ body {
 .btn-mirror-ctrl:hover {
   background: rgba(30, 41, 59, 0.95);
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-mirror-ctrl.danger {
+  background: rgba(220, 38, 38, 0.85);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 .btn-mirror-ctrl.danger:hover {
@@ -2943,16 +2972,6 @@ body {
   border-color: var(--primary);
   color: #fff;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-}
-
-/* Küçük Ekran Uyumu */
-@media (max-width: 480px) {
-  .live-mirror-box {
-    width: 52%;
-    max-width: 170px;
-    right: 8px;
-    bottom: 8px;
-  }
 }
 
 
