@@ -194,6 +194,42 @@ async function loadDataFromSupabaseOrLocal() {
       .order('name');
     
     if (dbCategories && dbCategories.length > 0) {
+      const dbCatIds = new Set(dbCategories.map(c => c.id));
+      const dbCatNames = new Set(dbCategories.map(c => c.name.toLowerCase().trim()));
+
+      // Mevcut yerel hafızadaki özel kategorileri kontrol et
+      const savedCatStr = localStorage.getItem(STORAGE_CATEGORIES_KEY);
+      let localCats = [];
+      if (savedCatStr) {
+        try { localCats = JSON.parse(savedCatStr); } catch (e) {}
+      }
+
+      const unsyncedCats = localCats.filter(lc => 
+        !dbCatIds.has(lc.id) && !dbCatNames.has(lc.name.toLowerCase().trim())
+      );
+
+      // Kullanıcı oturum açtıysa ve bilgisayarda buluta gitmemiş kategori varsa otomatik buluta yükle!
+      if (state.currentUser && unsyncedCats.length > 0) {
+        for (const cat of unsyncedCats) {
+          try {
+            await supabase.from('categories').insert([{
+              id: cat.id.startsWith('cat-') ? cat.id : ('cat-u-' + Date.now() + Math.random().toString(36).substr(2, 4)),
+              name: cat.name,
+              color: cat.color || '#2563eb',
+              user_id: state.currentUser.id
+            }]);
+          } catch (e) {
+            console.warn('Otomatik kategori senkronizasyonu:', e);
+          }
+        }
+        // En güncel veriyi tekrar çek
+        const { data: updatedCats } = await supabase.from('categories').select('*').order('name');
+        if (updatedCats && updatedCats.length > 0) {
+          dbCategories.length = 0;
+          dbCategories.push(...updatedCats);
+        }
+      }
+
       state.categories = dbCategories.map(c => ({
         id: c.id,
         name: c.name,
@@ -2108,32 +2144,55 @@ function initModals() {
   });
 
   // Yeni Kategori Kaydet (Hızlı Ekleme Modalı)
-  formCat?.addEventListener('submit', (e) => {
+  formCat?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const catNameInput = document.getElementById('category-name-input');
     const name = catNameInput.value.trim();
     if (!name) return;
 
-    if (state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-      alert('Bu isimde bir kategori zaten var!');
+    if (!state.currentUser) {
+      hideAddModal();
+      openAuthModal('login', 'Özel kategorilerinizin telefon ve diğer tüm cihazlarınızda görünmesi için lütfen giriş yapın.');
       return;
     }
 
-    const id = 'cat-' + Date.now();
+    if (state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      showToast('Bu isimde bir kategori zaten var!');
+      return;
+    }
+
+    const id = 'cat-u-' + Date.now();
     const colors = ['#2563eb', '#7c3aed', '#db2777', '#ea580c', '#059669', '#0891b2', '#475569', '#ca8a04', '#0d9488'];
     const randomColor = colors[state.categories.length % colors.length];
 
     const newCat = {
       id: id,
       name: name,
-      color: randomColor
+      color: randomColor,
+      userId: state.currentUser.id
     };
 
     state.categories.push(newCat);
+
+    try {
+      const { error } = await supabase.from('categories').insert([{
+        id: id,
+        name: name,
+        color: randomColor,
+        user_id: state.currentUser.id
+      }]);
+      if (error) throw error;
+      showToast('Kategori buluta kaydedildi ve tüm cihazlarla eşitlendi!');
+    } catch (err) {
+      console.warn('Kategori bulut kayıt hatası:', err);
+      showToast('Kategori eklendi, bulut senkronizasyonunda sorun oluştu.');
+    }
+
     saveState();
     renderFilterChips();
     populateCategorySelects();
     renderManageCategoriesList();
+    renderGifCategoryChips();
     hideAddModal();
   });
 
