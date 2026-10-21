@@ -1185,8 +1185,41 @@ function toggleFlowPlayPause() {
   }
 }
 
+// ==========================================================================
+// FLASHCARD DESTE MANTIĞI (Fisher-Yates Deste Karıştırma - Sıfır Tekrar)
+// ==========================================================================
+const flashcardDeckState = {
+  activeCategory: null,
+  deck: [],
+  currentIndex: -1
+};
+
+// Evrensel Düzgün Karıştırıcı (Fisher-Yates Shuffle)
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function resetFlashcardDeck(pool) {
+  let newDeck = shuffleArray(pool);
+
+  // Eğer önceki kelime varsa ve deste 1'den büyükse, ilk kelimenin hemen öncekiyle aynı olmasını önle
+  if (newDeck.length > 1 && state.currentFlashcard && newDeck[0].id === state.currentFlashcard.id) {
+    const swapIdx = Math.floor(Math.random() * (newDeck.length - 1)) + 1;
+    [newDeck[0], newDeck[swapIdx]] = [newDeck[swapIdx], newDeck[0]];
+  }
+
+  flashcardDeckState.activeCategory = state.practiceCategory || 'all';
+  flashcardDeckState.deck = newDeck;
+  flashcardDeckState.currentIndex = 0;
+}
+
 // Flashcard / Pratik
-function loadRandomFlashcard() {
+function loadRandomFlashcard(forceNewDeck = false) {
   const catEl = document.getElementById('fc-category');
   const wordEl = document.getElementById('fc-word');
   const hintEl = document.getElementById('fc-hint');
@@ -1196,8 +1229,9 @@ function loadRandomFlashcard() {
   let pool = [...state.words];
 
   // Kategori Filtresi
-  if (state.practiceCategory && state.practiceCategory !== 'all') {
-    pool = pool.filter(w => w.category === state.practiceCategory);
+  const currentCatFilter = state.practiceCategory || 'all';
+  if (currentCatFilter !== 'all') {
+    pool = pool.filter(w => w.category === currentCatFilter);
   }
 
   if (pool.length === 0) {
@@ -1207,28 +1241,40 @@ function loadRandomFlashcard() {
     if (poolCountEl) poolCountEl.textContent = '0 kelime';
     if (watchBtn) watchBtn.style.opacity = '0.5';
     state.currentFlashcard = null;
+    flashcardDeckState.deck = [];
+    flashcardDeckState.currentIndex = -1;
+    flashcardDeckState.activeCategory = currentCatFilter;
     return;
   }
 
-  if (poolCountEl) {
-    const isFiltered = (state.practiceCategory !== 'all');
-    poolCountEl.textContent = isFiltered ? `Havuz: ${pool.length} kelime` : `Tüm Havuz: ${pool.length} kelime`;
-  }
+  // Havuz veya kategori değişti mi kontrolü
+  const categoryChanged = (flashcardDeckState.activeCategory !== currentCatFilter);
+  const poolIds = pool.map(w => w.id).sort().join(',');
+  const deckIds = flashcardDeckState.deck.map(w => w.id).sort().join(',');
+  const poolContentChanged = (poolIds !== deckIds);
+  const reachedEnd = (flashcardDeckState.currentIndex >= flashcardDeckState.deck.length - 1);
 
-  // Zorlanılan kelimelere hafif öncelik ver (%35 şansla)
-  const hardWords = pool.filter(w => w.status === 'hard' || (w.clickCount || 0) >= 3);
-  const selectedPool = (hardWords.length > 0 && Math.random() < 0.35) ? hardWords : pool;
+  if (forceNewDeck || categoryChanged || poolContentChanged || reachedEnd || flashcardDeckState.deck.length === 0) {
+    const wasCompletedRound = reachedEnd && !categoryChanged && !forceNewDeck && !poolContentChanged && flashcardDeckState.deck.length > 1;
 
-  // Önceki kelimeyle ardışık aynı olmasını önle
-  let nextWord;
-  if (selectedPool.length > 1 && state.currentFlashcard) {
-    const candidates = selectedPool.filter(w => w.id !== state.currentFlashcard.id);
-    nextWord = candidates[Math.floor(Math.random() * candidates.length)] || selectedPool[0];
+    resetFlashcardDeck(pool);
+
+    if (wasCompletedRound) {
+      showToast('🎉 Tebrikler! Kategorideki tüm kelimeleri gördünüz, deste yeniden karıştırıldı.');
+    }
   } else {
-    nextWord = selectedPool[Math.floor(Math.random() * selectedPool.length)];
+    flashcardDeckState.currentIndex++;
   }
 
+  const nextWord = flashcardDeckState.deck[flashcardDeckState.currentIndex] || pool[0];
   state.currentFlashcard = nextWord;
+
+  if (poolCountEl) {
+    const currentNum = flashcardDeckState.currentIndex + 1;
+    const totalNum = flashcardDeckState.deck.length;
+    poolCountEl.textContent = `Deste: ${currentNum} / ${totalNum}`;
+    poolCountEl.title = `${totalNum} kelimelik deste (Her kelime 1 kez gelir, deste bitmeden tekrar etmez)`;
+  }
 
   const cat = state.categories.find(c => c.id === nextWord.category);
   if (catEl) catEl.textContent = cat ? cat.name : 'Genel';
@@ -1281,7 +1327,7 @@ function generateRandomSentence() {
   const actualLen = Math.min(requestedLen, pool.length);
 
   // Havuzdan rastgele N farklı kelime seç (Fisher-Yates)
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const shuffled = shuffleArray(pool);
   const selectedWords = shuffled.slice(0, actualLen);
   state.currentGeneratedSentence = selectedWords;
 
@@ -2458,7 +2504,13 @@ function initSearchAndFilters() {
 
   practiceCatSelect?.addEventListener('change', (e) => {
     state.practiceCategory = e.target.value;
-    loadRandomFlashcard();
+    loadRandomFlashcard(true); // Yeni kategori için desteyi hemen baştan karıştır
+  });
+
+  // Desteyi Baştan Karıştır Butonu
+  document.getElementById('btn-fc-shuffle-deck')?.addEventListener('click', () => {
+    loadRandomFlashcard(true);
+    showToast('🎲 Deste yeniden karıştırıldı ve 1. kelimeden başlatıldı.');
   });
 
   document.getElementById('btn-fc-check')?.addEventListener('click', () => {
@@ -2468,7 +2520,7 @@ function initSearchAndFilters() {
       syncWordProgress(state.currentFlashcard);
       renderWordsList();
     }
-    loadRandomFlashcard();
+    loadRandomFlashcard(false);
   });
 
   document.getElementById('btn-fc-watch')?.addEventListener('click', () => {
@@ -2482,7 +2534,7 @@ function initSearchAndFilters() {
   });
 
   document.getElementById('btn-fc-next')?.addEventListener('click', () => {
-    loadRandomFlashcard();
+    loadRandomFlashcard(false);
   });
 
   // Pratik Modu Geçişleri (Tek Kelime vs Akıcı Cümle vs GIF Slayt)
